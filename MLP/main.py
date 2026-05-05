@@ -1,7 +1,7 @@
 ## Projeto MLP  
 ## Importa csv
 from math import tanh
-from classes import Neuron 
+from neuron import Neuron 
 import pandas as pd
 import numpy as np
 import random as rd
