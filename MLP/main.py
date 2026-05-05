@@ -36,17 +36,21 @@ print(saidas_XOR)
 
 
 ## Inicializa pesos e bias
-##Camada oculta
+##Camada oculta (lista de neuronios)
 tamanhoCamadaOculta = 2
 camadaOculta = []
 for i in range(tamanhoCamadaOculta):
-    camadaOculta.append(Neuron(
-                    [round(rd.uniform(-1,1), 4), round(rd.uniform(-1,1), 4)],
-                    round(rd.uniform(-1, 1), 4))
-                  )
+    # camadaOculta.append(Neuron(
+    #                 [round(rd.uniform(-1,1), 4), round(rd.uniform(-1,1), 4)],
+    #                 round(rd.uniform(-1, 1), 4))
+    #               )
 
-neuronioSaida = Neuron([round(rd.uniform(-1,1), 4), round(rd.uniform(-1,1), 4)],
-                  round(rd.uniform(-1, 1), 4))
+   camadaOculta.append(Neuron([0.5, 0.5], 0.5))
+
+#neuronioSaida = Neuron([round(rd.uniform(-1,1), 4), round(rd.uniform(-1,1), 4)],
+#                  round(rd.uniform(-1, 1), 4))
+
+neuronioSaida = Neuron([0.8, 0.1], 0.3)
 
 
 # print("Neuronio 1: ")
@@ -57,7 +61,7 @@ neuronioSaida = Neuron([round(rd.uniform(-1,1), 4), round(rd.uniform(-1,1), 4)],
 # print(f"Bias: {camadaOculta[1].bias}")
 
 # Taxa de aprendizado
-taxa_aprendizado = 0.5000
+# taxa_aprendizado = 0.5000
 
 
 ## ÉPOCAS - Definir condições de parada (minimiza alguma funcao de custo - informcao de erro, MSE (erro quadratico medio)) e taxa de aprendizado:
@@ -65,18 +69,17 @@ taxa_aprendizado = 0.5000
 saidasOcultas = []
 listaMaluca = []
 
-for i in range(len(entradas_AND)): ##Quantidade de linhas
+for i in range(len(entradas_AND)): ##Para cada linha do dataset
     print (f"Linha {i}: {entradas_AND[i]}") 
-    for j in range(tamanhoCamadaOculta): ## 2 neuronios intermediarios
-        saidasOcultas.append(camadaOculta[j].neuron_iteration(entradas_AND[i])) ## Para cada neuronio da camada oculta processa 1 linha e salva no array
+    for j in range(tamanhoCamadaOculta): ## Para cada neuronio 
+        saidasOcultas.append(camadaOculta[j].neuronFeedFoward(entradas_AND[i])) ## Para cada neuronio da camada oculta processa 1 linha e salva no array de saidas da camada ocultas
     print (f"Saidas ocultas: {saidasOcultas}")
-    SaidaFinal = neuronioSaida.neuron_iteration(saidasOcultas) ##Pega a quantidade de saidas ocultas e processa no neuronio de saida 
-    listaMaluca.append(saidasOcultas.copy())
+    SaidaFinal = neuronioSaida.neuronFeedFoward(saidasOcultas) ##Pega a quantidade de saidas ocultas e processa no neuronio de saida 
+    listaMaluca.append(saidasOcultas.copy())  # Insere as saídas da camada oculta no final da lista de saídas
     saidasOcultas.clear() #Limpa lista Aux os parametros do neurônio de saida.
     
     print (f"Camada saida: {SaidaFinal}")
     print (f"Lista Maluca (Salva saidas): {listaMaluca}")
-
     
     ## BackWard Propagation (Gradiente Descente...) 
 
