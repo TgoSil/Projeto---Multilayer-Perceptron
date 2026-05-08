@@ -40,8 +40,3 @@ class Neuron:
         erro = (t_k - y_k)             
         delta = erro * self.derivada_func_ativ_tanh(self.value_in)  # (target - gerado) x derivada(y_in) -> regra da cadeia
         return delta
-
-
-# a = [0, 1, 2, 3, 4, 5]
-# for i in range(len(a) -2, -1, -1):
-#     print(i, a[i])

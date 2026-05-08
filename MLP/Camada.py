@@ -27,7 +27,6 @@ class Camada:
         deltasCamada = []
         for i in range(len(self.camada)):
             deltasCamada.append(self.camada[i].output_Neuron_BackPropagation(y_k[i], t_k[i]))
-        
         return deltasCamada
     
     def camadaUpdate(self, deltas:list, listaEntradas:list, taxaAprendizado:float):

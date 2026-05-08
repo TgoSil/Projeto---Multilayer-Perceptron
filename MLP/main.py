@@ -14,8 +14,8 @@ df_OR = pd.read_csv("portas_logicas/problemOR.csv", sep=",", header=None)
 df_XOR = pd.read_csv("portas_logicas/problemXOR.csv", sep=",", header=None)
 
 # #Extrair arrays/list da entradas e saídas
-entradas_AND = df_AND.iloc[:, 0:2].values
-saidas_AND = df_AND.iloc[:, 2].values
+entradas_AND = pd.DataFrame(df_AND.iloc[:, 0:2]).values
+saidas_AND = pd.DataFrame(df_AND.iloc[:, 2]).values
 # print("CSV AND")
 # print(entradas_AND)
 # print(saidas_AND)
@@ -35,8 +35,12 @@ saidas_AND = df_AND.iloc[:, 2].values
 # print(saidas_XOR)
 
 gere = Gerenciador(0.9, entradas_AND, saidas_AND)
-gere.criaCamada(2)
-gere.criaCamada(1)
+gere.criaCamada(len(entradas_AND[0]))
+# gere.criaCamada(10)
+# gere.criaCamada(9)
+# gere.criaCamada(5)
+# gere.criaCamada(10)
+gere.criaCamada(len(saidas_AND[0]))
 gere.MLP()
 
 ## Passo 0: Inicializa pesos, bias, taxa de aprendizado, número de épocas, etc 
