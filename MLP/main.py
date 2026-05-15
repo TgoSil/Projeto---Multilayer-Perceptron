@@ -37,11 +37,11 @@ def main():
     # print(saidas_XOR)
 
     # camadas = iniciaRede(10, len(entradas_AND[0]), len(saidas_AND[0]))
-    gere = Gerenciador(0.9, entradas_OR, saidas_OR)
+    gere = Gerenciador(0.5, entradas_XOR, saidas_XOR)
     innit = gere.iniciaRede(2) 
     if not innit: return
     gere.printaRede()
-    gere.MLP_treinamento(500) #nro de epocas
+    gere.MLP_treinamento(100) #nro de epocas
 
     ## Passo 0: Inicializa pesos, bias, taxa de aprendizado, número de épocas, etc 
     ## Passo 1: Enquanto a condição de parada é falsa, execute mais uma época

@@ -19,19 +19,21 @@ class Camada:
     def camadaBackPropagation(self, deltas:list, pesosCamadaFrente:list):
         deltasCamada = []
         for i in range(len(self.camada)):
-            deltasCamada.append(self.camada[i].neuron_BackPropagation(deltas, pesosCamadaFrente[i]))
+            deltasCamada.append(self.camada[i].neuron_BackPropagation(deltas, pesosCamadaFrente[i+1]))
         
         return deltasCamada
 
     def camadaOutputBackPropagation(self, y_k:list, t_k:list): #Entrada nesse caso é a saida da camada_oculta
         deltasCamada = []
         for i in range(len(self.camada)):
-            deltasCamada.append(self.camada[i].output_Neuron_BackPropagation(y_k[i], t_k[i]))
+            deltasCamada.append(self.camada[i].output_Neuron_BackPropagation(y_k[i+1], t_k[i]))
         return deltasCamada
     
     def camadaUpdate(self, deltas:list, listaEntradas:list, taxaAprendizado:float):
+        # print(f"Pesos: {self.pesos}")
         for i, neuronio in enumerate(self.camada):
             neuronio.neuron_Update(deltas[i], listaEntradas, taxaAprendizado)
+        # print(f"Pesos novos: {self.pesos}")
 
 #a = Camada(3, 4)
 #print(vars(a))
