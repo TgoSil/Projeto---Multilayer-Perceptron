@@ -15,6 +15,9 @@ def main():
     df_OR = pd.read_csv("portas_logicas/problemOR.csv", sep=",", header=None)
     df_XOR = pd.read_csv("portas_logicas/problemXOR.csv", sep=",", header=None)
 
+    df_X = np.load("caracteres_completo/X.npy")
+    np.set_printoptions(threshold=np.inf)
+    df_Y = np.load("caracteres_completo/Y_classe.npy")
     # #Extrair arrays/list da entradas e saídas
     entradas_AND = pd.DataFrame(df_AND.iloc[:, 0:2]).values
     saidas_AND = pd.DataFrame(df_AND.iloc[:, 2]).values

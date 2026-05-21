@@ -15,7 +15,7 @@ class Gerenciador:
         if len(self.camadas) > 0:
             self.camadas.append(Camada(qtdNeurons, len(self.camadas[-1].camada)+1))
         else:
-            self.camadas.append(Camada(qtdNeurons, len(self.entradas[0]))) # Parametro incorreto, faz todos os neuronios terem 3 pesos
+            self.camadas.append(Camada(qtdNeurons, len(self.entradas[0])))
 
     def printaRede(self):
         for i, camada in enumerate(self.camadas):
@@ -32,17 +32,26 @@ class Gerenciador:
         self.criaCamada(len(self.targets[0]))  #Cria camada de saida
         return True
         
-    def log(self, saidas:list):
-        print("Saidas rede neural: ")
-        df = pd.DataFrame(saidas)
-        print(df)
-        # df.to_csv(path_escolhido\log.csv, index=False) Guarda o log de saidas
-        for i, saida in enumerate(saidas):
-            print(f"{i}ª saida: {saida}")
-            # taxaAprendizado, entradas, saidas: ENTRADA GERENCIADOR
-            # qtdNeurons, qtdEntradas: ENTRADA CAMADA
-            # pesos: ENTRADA NEURONIO
-            # return delta SAIDA ?
+    def logIniciais(self):
+        with open("log/pesos_iniciais.txt", "w", encoding="utf-8") as pesos_iniciais:
+            for i, camada in enumerate(self.camadas):
+                pesos_iniciais.write(f"Camada {i+1}:\n")
+                np.savetxt(pesos_iniciais, camada.pesos, fmt='%.2f', delimiter=',')
+
+        # taxaAprendizado, entradas, saidas: ENTRADA GERENCIADOR
+        # qtdNeurons, qtdEntradas: ENTRADA CAMADA
+        # pesos: ENTRADA NEURONIO
+        # return delta SAIDA ?
+    
+    def logFinais(self):
+        with open("log/pesos_finais.txt", "w", encoding="utf-8") as pesos_finais:
+            for i, camada in enumerate(self.camadas):
+                pesos_finais.write(f"Camada {i+1}:\n")
+                np.savetxt(pesos_finais, camada.pesos, fmt='%.2f', delimiter=',')
+
+    def logSaidas(self, saidas:list):
+        with open("log/saidas_teste.txt", "a", encoding="utf-8") as saidas_teste:
+            np.savetxt(saidas_teste, saidas, fmt='%.2f', delimiter=',')
 
     def criaArrayPesosDoBackPropagation(self, pesosCamadas): #"Virando" - tranposta da matriz de pesos da camada de saida para que seja mais fácil de calcular o deltinha da camada atual
         pesosParaCalcularDelta = []
@@ -54,6 +63,7 @@ class Gerenciador:
 
     def MLP_treinamento(self, numEpocas:int):
         i = 0
+        self.logIniciais()
         for epoca in range(numEpocas): #Roda por um número definido de épocas (condição de parada)
             saidasFinal = []
             for linha_entrada, linha_saida  in zip(self.entradas, self.targets):
@@ -96,6 +106,11 @@ class Gerenciador:
             for count in range(len(saidasFinal)):
                 print(f"{saidasFinal[count][1:]}", end="") #imprime as saidas encontradas ao final dessa época
             print()
-        # self.log(saidasFinal)
+        with open("log/saidas_teste.txt", "w", encoding="utf-8") as saidas_teste:
+            saidas_teste.write("")
+        for count in range(len(saidasFinal)):
+            self.logSaidas(saidasFinal[count][1:])
+        self.logFinais()
+    
     def MLP_execucao(self, ):
         pass
