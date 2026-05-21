@@ -10,7 +10,6 @@ class Gerenciador:
         self.targets = saidas
         self.camadas = []
 
-
     def criaCamada(self, qtdNeurons:int):
         if len(self.camadas) > 0:
             self.camadas.append(Camada(qtdNeurons, len(self.camadas[-1].camada)+1))
@@ -28,15 +27,15 @@ class Gerenciador:
         self.criaCamada(len(self.entradas[0])-1) #Cria primeira camada oculta
         for i in range(qtdCamadas-2):
             # self.criaCamada(random.randint(2, 10)) #Cria camada oculta com numero aleatoria de neuronios
-            self.criaCamada(2) #Cria camada oculta com numero aleatoria de neuronios
+            self.criaCamada(2) #Cria camada oculta com 2 neuronios
         self.criaCamada(len(self.targets[0]))  #Cria camada de saida
         return True
         
     def logIniciais(self):
         with open("log/pesos_iniciais.txt", "w", encoding="utf-8") as pesos_iniciais:
             for i, camada in enumerate(self.camadas):
-                pesos_iniciais.write(f"Camada {i+1}:\n")
-                np.savetxt(pesos_iniciais, camada.pesos, fmt='%.2f', delimiter=',')
+                ## pesos_iniciais.write(f"Camada {i+1}:\n")
+                np.savetxt(pesos_iniciais, camada.pesos, fmt='%.6f', delimiter=',')
 
         # taxaAprendizado, entradas, saidas: ENTRADA GERENCIADOR
         # qtdNeurons, qtdEntradas: ENTRADA CAMADA
@@ -46,12 +45,12 @@ class Gerenciador:
     def logFinais(self):
         with open("log/pesos_finais.txt", "w", encoding="utf-8") as pesos_finais:
             for i, camada in enumerate(self.camadas):
-                pesos_finais.write(f"Camada {i+1}:\n")
-                np.savetxt(pesos_finais, camada.pesos, fmt='%.2f', delimiter=',')
+                ## pesos_finais.write(f"Camada {i+1}:\n")
+                np.savetxt(pesos_finais, camada.pesos, fmt='%.6f', delimiter=',')
 
     def logSaidas(self, saidas:list):
         with open("log/saidas_teste.txt", "a", encoding="utf-8") as saidas_teste:
-            np.savetxt(saidas_teste, saidas, fmt='%.2f', delimiter=',')
+            np.savetxt(saidas_teste, saidas, fmt='%.6f', delimiter=',')
 
     def criaArrayPesosDoBackPropagation(self, pesosCamadas): #"Virando" - tranposta da matriz de pesos da camada de saida para que seja mais fácil de calcular o deltinha da camada atual
         pesosParaCalcularDelta = []
@@ -111,6 +110,31 @@ class Gerenciador:
         for count in range(len(saidasFinal)):
             self.logSaidas(saidasFinal[count][1:])
         self.logFinais()
+
+    def MLP_teste(self):
+        matriz = np.loadtxt('log/pesos_finais.txt', delimiter=',')
+        print(matriz)
+        for camada in self.camadas:
+            for i in range(len(camada.pesos)):
+                for j in range(len(camada.pesos[0])):
+                    camada.pesos[i][j] = matriz[i][j]
+        
+        saidasFinal = []
+        for linha_entrada in self.entradas:
+            saidasCamadas = [] # Cada linha é uma camada e cada coluna é a resposta de um neurônio
+            ## Inicia FeedFoward e armazena as saidas de cada camada em um array
+            saidasCamadas.append(self.camadas[0].camadaFeedFoward(linha_entrada)) # Feedforward na primeira camada
+
+            for i_camada in range(1, len(self.camadas)): # Feedfoward nas outras camadas
+                saidasCamadas.append(self.camadas[i_camada].camadaFeedFoward(saidasCamadas[i_camada-1]))
+            
+            saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])
+        
+        for count in range(len(saidasFinal)):
+                print(f"{saidasFinal[count][1:]}", end="")
+
+        self.logIniciais()
+
     
     def MLP_execucao(self, ):
         pass
