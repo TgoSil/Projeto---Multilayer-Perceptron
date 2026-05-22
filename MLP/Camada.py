@@ -1,11 +1,13 @@
 from neuron import Neuron 
 import random as rd
+import numpy as np
 class Camada:
     
     def __init__(self, qtdNeurons:int, qtdEntradas:int):
-        self.pesos = []
-        for i in range(qtdNeurons):
-            self.pesos.append([round(rd.uniform(-1,1),4) for j in range (qtdEntradas)]) #Para cada neuronia cria seus pesos para cada entrada (E "+1" por causa do bias)
+        self.pesos = np.random.uniform(-0.5, 0.5, size=(qtdNeurons, qtdEntradas))
+        # self.pesos = []
+        # for i in range(qtdNeurons):
+        #     self.pesos.append([round(rd.uniform(-0.5,0.5),4) for j in range (qtdEntradas)]) #Para cada neuronia cria seus pesos para cada entrada (E "+1" por causa do bias)
         self.camada = [Neuron(self.pesos[k]) for k in range(qtdNeurons)] #Recebe a quantidade de entradas e cria a lista de neuronios
     
     def camadaFeedFoward(self, entradas:list):
@@ -30,11 +32,5 @@ class Camada:
         return deltasCamada
     
     def camadaUpdate(self, deltas:list, listaEntradas:list, taxaAprendizado:float):
-        # print(f"Pesos: {self.pesos}")
         for i, neuronio in enumerate(self.camada):
             neuronio.neuron_Update(deltas[i], listaEntradas, taxaAprendizado)
-        # print(f"Pesos novos: {self.pesos}")
-
-#a = Camada(3, 4)
-#print(vars(a))
-#poggers
