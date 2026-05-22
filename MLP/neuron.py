@@ -9,8 +9,9 @@ class Neuron:
         self.value_in = None
 
     def func_ativ_tanh(self, y_in):
-        # return np.tanh(y_in)
-        return 2 / (1 + np.exp(-2*y_in)) -1
+        return np.tanh(y_in)
+        # y_in = round(y_in, 3)
+        # return 2 / (1 + np.exp(-2*y_in)) -1
     
     def derivada_func_ativ_tanh(self, y_in): #depois pensa em generalizar para outras funcoes de ativação
         # return 1.0 - np.tanh(y_in)**2

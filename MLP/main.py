@@ -15,33 +15,29 @@ def main():
     df_OR = pd.read_csv("portas_logicas/problemOR.csv", sep=",", header=None)
     df_XOR = pd.read_csv("portas_logicas/problemXOR.csv", sep=",", header=None)
 
+    df_X = pd.read_csv("caracteres_completo/X.txt", sep=",", header=None)
+    entradas_X = pd.DataFrame(df_X.iloc[:, 0:-1]).values
+    # np.set_printoptions(threshold=np.inf)
+    df_Y = np.load("caracteres_completo/Y_classe.npy")
+    df_Y = np.where(df_Y == 0, -1, df_Y)
+    print(df_Y)
+
     # #Extrair arrays/list da entradas e saídas
     entradas_AND = pd.DataFrame(df_AND.iloc[:, 0:2]).values
     saidas_AND = pd.DataFrame(df_AND.iloc[:, 2]).values
-    # print("CSV AND")
-    # print(entradas_AND)
-    # print(saidas_AND)
 
     entradas_OR = pd.DataFrame(df_OR.iloc[:, 0:2]).values
     saidas_OR = pd.DataFrame(df_OR.iloc[:, 2]).values
-    # print()
-    # print("CSV OR")
-    # print(entradas_OR)
-    # print(saidas_OR)
 
     entradas_XOR = pd.DataFrame(df_XOR.iloc[:, 0:2]).values
     saidas_XOR = pd.DataFrame(df_XOR.iloc[:, 2]).values
-    # print()
-    # print("CSV XOR")
-    # print(entradas_XOR)
-    # print(saidas_XOR)
 
     # camadas = iniciaRede(10, len(entradas_AND[0]), len(saidas_AND[0]))
-    gere = Gerenciador(0.5, entradas_XOR, saidas_XOR)
+    gere = Gerenciador(0.01, entradas_XOR, saidas_XOR)
     innit = gere.iniciaRede(2) 
     if not innit: return
     gere.printaRede()
-    gere.MLP_treinamento(100) #nro de epocas
+    gere.MLP_treinamento(10000) #nro de epocas
 
     ## Passo 0: Inicializa pesos, bias, taxa de aprendizado, número de épocas, etc 
     ## Passo 1: Enquanto a condição de parada é falsa, execute mais uma época
