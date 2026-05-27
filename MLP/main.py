@@ -1,7 +1,7 @@
 ## Projeto MLP  
 ## Importa csv
 from math import tanh
-from neuron import Neuron 
+from Neuron import Neuron 
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -20,7 +20,7 @@ def main():
     df_Y = np.load("caracteres_completo/Y_classe.npy")
     df_Y = np.where(df_Y == 0, -1, df_Y)
     saidas_Y = df_Y
-    # print(df_Y)
+    print(df_Y)
 
     # #Extrair arrays/list da entradas e saídas
     # entradas_AND = pd.DataFrame(df_AND.iloc[:, 0:2]).values
@@ -33,7 +33,7 @@ def main():
     # saidas_XOR = pd.DataFrame(df_XOR.iloc[:, 2]).values
 
     # camadas = iniciaRede(10, len(entradas_AND[0]), len(saidas_AND[0]))
-    gere = Gerenciador(0.01, entradas_X, saidas_Y)
+    gere = Gerenciador(0.02, entradas_X, saidas_Y)
     innit = gere.iniciaRede(2) 
     if not innit: return
     gere.printaRede()

@@ -1,36 +1,34 @@
-from neuron import Neuron 
+from Neuron import Neuron 
 import random as rd
 import numpy as np
 class Camada:
     
     def __init__(self, qtdNeurons:int, qtdEntradas:int):
         self.pesos = np.random.uniform(-0.5, 0.5, size=(qtdNeurons, qtdEntradas))
-        # self.pesos = []
-        # for i in range(qtdNeurons):
-        #     self.pesos.append([round(rd.uniform(-0.5,0.5),4) for j in range (qtdEntradas)]) #Para cada neuronia cria seus pesos para cada entrada (E "+1" por causa do bias)
-        self.camada = [Neuron(self.pesos[k]) for k in range(qtdNeurons)] #Recebe a quantidade de entradas e cria a lista de neuronios
+        self.values_in = []
+        self.camada = qtdNeurons
     
-    def camadaFeedFoward(self, entradas:list):
-        saidasCamada = [1]
-        for neuronio in self.camada: ## Para cada neuronio 
-            saidasCamada.append(neuronio.neuron_FeedFoward(entradas)) ## Processa 1 linha e salva no array de saidas da camada
-        #print (f"Saidas: {saidasCamada}")
+    def func_ativ_tanh(self, y_in):
+        return np.tanh(y_in)
 
+    def derivada_func_ativ_tanh(self, y_in): #depois pensa em generalizar para outras funcoes de ativação
+        return 1.0 - np.tanh(y_in)**2
+
+    def camadaFeedFoward(self, entradas:list):
+        self.values_in = np.dot(self.pesos, entradas)
+        saidasCamada = self.func_ativ_tanh(self.values_in)
+        saidasCamada = np.insert(saidasCamada, 0, 1)
         return saidasCamada
 
     def camadaBackPropagation(self, deltas:list, pesosCamadaFrente:list):
-        deltasCamada = []
-        for i in range(len(self.camada)):
-            deltasCamada.append(self.camada[i].neuron_BackPropagation(deltas, pesosCamadaFrente[i+1]))
-        
+        deltas_in = np.dot(pesosCamadaFrente[1:], deltas)
+        deltasCamada = deltas_in * self.derivada_func_ativ_tanh(self.values_in)
         return deltasCamada
 
     def camadaOutputBackPropagation(self, y_k:list, t_k:list): #Entrada nesse caso é a saida da camada_oculta
-        deltasCamada = []
-        for i in range(len(self.camada)):
-            deltasCamada.append(self.camada[i].output_Neuron_BackPropagation(y_k[i+1], t_k[i]))
-        return deltasCamada
+        erro = np.array(t_k) - np.array(y_k[1:]) # em y_k tiramos a entrada do Bias
+        deltasCamada = erro * self.derivada_func_ativ_tanh(self.values_in)
+        return deltasCamada #Retorna lista de deltas
     
     def camadaUpdate(self, deltas:list, listaEntradas:list, taxaAprendizado:float):
-        for i, neuronio in enumerate(self.camada):
-            neuronio.neuron_Update(deltas[i], listaEntradas, taxaAprendizado)
+        self.pesos += np.outer(deltas * taxaAprendizado, listaEntradas)

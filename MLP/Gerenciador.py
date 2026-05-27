@@ -12,13 +12,13 @@ class Gerenciador:
 
     def criaCamada(self, qtdNeurons:int):
         if len(self.camadas) > 0:
-            self.camadas.append(Camada(qtdNeurons, len(self.camadas[-1].camada)+1))
+            self.camadas.append(Camada(qtdNeurons, (self.camadas[-1].camada+1))) #Pega quantidade de neuronios da ultima camada e adiciona mais 1 como entrada (por causa do BIAS)
         else:
             self.camadas.append(Camada(qtdNeurons, len(self.entradas[0])))
 
     def printaRede(self):
         for i, camada in enumerate(self.camadas):
-            print(f"{i+1}ª camada: {len(camada.camada)} neurônios")
+            print(f"{i+1}ª camada: {camada.camada} neurônios")
 
     def iniciaRede(self, qtdCamadas:int):
         if (qtdCamadas < 2): 
