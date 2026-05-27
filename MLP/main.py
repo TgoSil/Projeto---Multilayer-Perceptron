@@ -1,11 +1,7 @@
 ## Projeto MLP  
 ## Importa csv
-from math import tanh
-from Neuron import Neuron 
 import pandas as pd
 import numpy as np
-from pathlib import Path
-import random as rd
 from Gerenciador import Gerenciador
 
 
