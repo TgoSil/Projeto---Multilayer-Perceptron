@@ -1,4 +1,5 @@
 # Projeto---Multilayer-Perceptron
-quero ser contribuidor 
+eu tambem quero ser contribuidor 
 GENKIDAMA FORCAS
 Oiiieeee
+!-!
