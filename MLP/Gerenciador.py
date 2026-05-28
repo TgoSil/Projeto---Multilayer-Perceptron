@@ -12,13 +12,13 @@ class Gerenciador:
 
     def criaCamada(self, qtdNeurons:int):
         if len(self.camadas) > 0:
-            self.camadas.append(Camada(qtdNeurons, len(self.camadas[-1].camada)+1))
+            self.camadas.append(Camada(qtdNeurons, (self.camadas[-1].camada+1))) #Pega quantidade de neuronios da ultima camada e adiciona mais 1 como entrada (por causa do BIAS)
         else:
             self.camadas.append(Camada(qtdNeurons, len(self.entradas[0])))
 
     def printaRede(self):
         for i, camada in enumerate(self.camadas):
-            print(f"{i+1}ª camada: {len(camada.camada)} neurônios")
+            print(f"{i+1}ª camada: {camada.camada} neurônios")
 
     def iniciaRede(self, qtdCamadas:int):
         if (qtdCamadas < 2): 
@@ -27,7 +27,7 @@ class Gerenciador:
         self.criaCamada(len(self.entradas[0])-1) #Cria primeira camada oculta
         for i in range(qtdCamadas-2):
             # self.criaCamada(random.randint(2, 10)) #Cria camada oculta com numero aleatoria de neuronios
-            self.criaCamada(2) #Cria camada oculta com 2 neuronios
+            self.criaCamada(120) #Cria camada oculta com 2 neuronios
         self.criaCamada(len(self.targets[0]))  #Cria camada de saida
         return True
         
@@ -79,7 +79,7 @@ class Gerenciador:
                 for i_deltas in range(len(self.camadas) -2, -1, -1): # Armazena deltas das outras camadas
                     deltasCamadas.insert(0, 
                         self.camadas[i_deltas].camadaBackPropagation(
-                            deltasCamadas[0], self.criaArrayPesosDoBackPropagation(self.camadas[i_deltas+1].pesos)
+                            deltasCamadas[0], np.array(self.camadas[i_deltas+1].pesos).T
                         )
                     )
                 
