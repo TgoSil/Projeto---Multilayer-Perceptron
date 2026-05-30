@@ -9,6 +9,10 @@ class Gerenciador:
         self.entradas = np.insert(entradas, 0, 1, axis=1)
         self.targets = saidas
         self.camadas = []
+        self.tol = tolerancia
+        self.qntEpocasSemErro = paciencia
+        self.cont = 0
+        self.menorErro = float('inf')
 
     def criaCamada(self, qtdNeurons:int):
         if len(self.camadas) > 0:
@@ -47,6 +51,12 @@ class Gerenciador:
         with open("log/saidas_teste.txt", "a", encoding="utf-8") as saidas_teste:
             np.savetxt(saidas_teste, saidas, fmt='%.6f', delimiter=',', newline=' ')
             saidas_teste.write("\n")
+
+    def earlyStopping(self, erro:float): 
+        delta = self.menorErro - erro
+        self.cont = 0 if delta > self.tol else self.cont + 1 # número de epocas seguidas sem melhora minima
+        if erro < self.menorErro: self.menorErro = erro
+        return self.cont >= self.qntEpocasSemErro
 
     def criaArrayPesosDoBackPropagation(self, pesosCamadas): #"Virando" - tranposta da matriz de pesos da camada de saida para que seja mais fácil de calcular o deltinha da camada atual
         pesosParaCalcularDelta = []
@@ -92,11 +102,18 @@ class Gerenciador:
             ##for count in range(len(saidasFinal)):
             ##    print(f"{saidasFinal[count][1:]}", end="") #imprime as saidas encontradas ao final dessa época
             ##print()
+
+            if self.earlyStopping(MSE_epoca):
+                print("Early Stopping")
+                break # Verificação se o erro da época ultrapassa a tolerância
+
         with open("log/saidas_teste.txt", "w", encoding="utf-8") as saidas_teste:
             saidas_teste.write("")
         for count in range(len(saidasFinal)):
             self.logSaidas(saidasFinal[count][1:])
         self.logFinais()
+
+
 
     def MLP_teste(self):
         matriz = np.loadtxt('log/pesos_finais.txt', delimiter=',')
