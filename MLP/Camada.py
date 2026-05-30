@@ -1,4 +1,3 @@
-from Neuron import Neuron 
 import random as rd
 import numpy as np
 class Camada:
