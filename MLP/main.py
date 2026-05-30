@@ -1,7 +1,7 @@
 ## Projeto MLP  
 ## Importa csv
 from math import tanh
-from Neuron import Neuron 
+#from Neuron import Neuron 
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -33,11 +33,11 @@ def main():
     # saidas_XOR = pd.DataFrame(df_XOR.iloc[:, 2]).values
 
     # camadas = iniciaRede(10, len(entradas_AND[0]), len(saidas_AND[0]))
-    gere = Gerenciador(0.02, entradas_X, saidas_Y)
-    innit = gere.iniciaRede(2) 
+    gere = Gerenciador(0.05, entradas_X, saidas_Y, 0.00001, 100)
+    innit = gere.iniciaRede(8)
     if not innit: return
     gere.printaRede()
-    gere.MLP_treinamento(3000) #nro de epocas
+    gere.MLP_treinamento(100000) #nro de epocas
 
 if __name__ == "__main__":
     main()
