@@ -43,8 +43,8 @@ class Gerenciador:
                 # pesos_finais.write(f"Camada {i+1}:\n")
                 np.savetxt(pesos_finais, camada.pesos, fmt='%.6f', delimiter=',')
 
-    def logSaidas(self, saidas:list):
-        with open("log/saidas_teste.txt", "a", encoding="utf-8") as saidas_teste:
+    def logSaidas(self, saidas:list, nomeArq):
+        with open(nomeArq, "a", encoding="utf-8") as saidas_teste:
             np.savetxt(saidas_teste, saidas, fmt='%.6f', delimiter=',', newline=' ')
             saidas_teste.write("\n")
 
@@ -92,36 +92,53 @@ class Gerenciador:
             ##for count in range(len(saidasFinal)):
             ##    print(f"{saidasFinal[count][1:]}", end="") #imprime as saidas encontradas ao final dessa época
             ##print()
-        with open("log/saidas_teste.txt", "w", encoding="utf-8") as saidas_teste:
-            saidas_teste.write("")
+        with open("log/saidas_treinamento.txt", "w", encoding="utf-8") as saidas_treinamento: # "log/saidas_teste.txt"
+            saidas_treinamento.write("")
         for count in range(len(saidasFinal)):
-            self.logSaidas(saidasFinal[count][1:])
+            self.logSaidas(saidasFinal[count][1:], "log/saidas_treinamento.txt")
         self.logFinais()
 
-    def MLP_teste(self):
-        matriz = np.loadtxt('log/pesos_finais.txt', delimiter=',')
-        ##print(matriz)
-        for camada in self.camadas:
-            for i in range(len(camada.pesos)):
-                for j in range(len(camada.pesos[0])):
-                    camada.pesos[i][j] = matriz[i][j]
+    # def MLP_teste(self):
+    #     matriz = np.loadtxt('log/pesos_finais.txt', delimiter=',')
+    #     ##print(matriz)
+    #     for camada in self.camadas:
+    #         for i in range(len(camada.pesos)):
+    #             for j in range(len(camada.pesos[0])):
+    #                 camada.pesos[i][j] = matriz[i][j]
         
-        saidasFinal = []
-        for linha_entrada in self.entradas:
-            saidasCamadas = [] # Cada linha é uma camada e cada coluna é a resposta de um neurônio
-            ## Inicia FeedFoward e armazena as saidas de cada camada em um array
-            saidasCamadas.append(self.camadas[0].camadaFeedFoward(linha_entrada)) # Feedforward na primeira camada
+    #     saidasFinal = []
+    #     for linha_entrada in self.entradas:
+    #         saidasCamadas = [] # Cada linha é uma camada e cada coluna é a resposta de um neurônio
+    #         ## Inicia FeedFoward e armazena as saidas de cada camada em um array
+    #         saidasCamadas.append(self.camadas[0].camadaFeedFoward(linha_entrada)) # Feedforward na primeira camada
 
-            for i_camada in range(1, len(self.camadas)): # Feedfoward nas outras camadas
-                saidasCamadas.append(self.camadas[i_camada].camadaFeedFoward(saidasCamadas[i_camada-1]))
+    #         for i_camada in range(1, len(self.camadas)): # Feedfoward nas outras camadas
+    #             saidasCamadas.append(self.camadas[i_camada].camadaFeedFoward(saidasCamadas[i_camada-1]))
             
-            saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])
+    #         saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])
         
-        ##for count in range(len(saidasFinal)):
-                ##print(f"{saidasFinal[count][1:]}", end="")
+    #     ##for count in range(len(saidasFinal)):
+    #             ##print(f"{saidasFinal[count][1:]}", end="")
 
-        self.logIniciais()
+    #     self.logIniciais()
 
     
-    def MLP_execucao(self, ):
-        pass
+    # 1326 caracteres 266
+    def MLP_execucao(self, entradas, saidas:list):
+        saidasFinal = []
+        entradas = np.insert(entradas, 0, 1, axis=1) #Coloca o Bias
+        for linha_entrada, linha_saida in zip(entradas, saidas):
+            saidasCamadas = []
+            saidasCamadas.append(self.camadas[0].camadaFeedFoward(linha_entrada)) #Feedfoward na primeira camada
+            
+            for i_camada in range(1, len(self.camadas)): # Feedfoward nas outras camadas
+                    saidasCamadas.append(self.camadas[i_camada].camadaFeedFoward(saidasCamadas[i_camada-1]))
+                    
+            saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])            
+            #print("terminou o feedfoward")
+
+        with open("log/saidas_teste.txt", "w", encoding="utf-8") as saidas_teste: # "log/saidas_teste.txt"
+            saidas_teste.write("")
+        for count in range(len(saidasFinal)):
+            self.logSaidas(saidasFinal[count][1:], "log/saidas_teste.txt") # Escreve as saidas
+       
