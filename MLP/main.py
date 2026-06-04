@@ -7,16 +7,16 @@ from Gerenciador import Gerenciador
 
 def main():
     #Abrir arquivo csv
-    df_AND = pd.read_csv("portas_logicas/problemAND.csv", sep=",", header=None)
-    df_OR = pd.read_csv("portas_logicas/problemOR.csv", sep=",", header=None)
-    df_XOR = pd.read_csv("portas_logicas/problemXOR.csv", sep=",", header=None)
+    # df_AND = pd.read_csv("portas_logicas/problemAND.csv", sep=",", header=None)
+    # df_OR = pd.read_csv("portas_logicas/problemOR.csv", sep=",", header=None)
+    # df_XOR = pd.read_csv("portas_logicas/problemXOR.csv", sep=",", header=None)
 
     df_X = pd.read_csv("caracteres_completo/X.txt", sep=",", header=None)
     entradas_X = pd.DataFrame(df_X.iloc[:, 0:-1]).values
     df_Y = np.load("caracteres_completo/Y_classe.npy")
     df_Y = np.where(df_Y == 0, -1, df_Y)
-    saidas_Y = df_Y
-    print(df_Y)
+    targets_Y = df_Y
+    # print(df_Y)
 
     # #Extrair arrays/list da entradas e saídas
     # entradas_AND = pd.DataFrame(df_AND.iloc[:, 0:2]).values
@@ -29,11 +29,19 @@ def main():
     # saidas_XOR = pd.DataFrame(df_XOR.iloc[:, 2]).values
 
     # camadas = iniciaRede(10, len(entradas_AND[0]), len(saidas_AND[0]))
-    gere = Gerenciador(0.02, entradas_X, saidas_Y)
-    innit = gere.iniciaRede(2) 
-    if not innit: return
-    gere.printaRede()
-    gere.MLP_treinamento(3000) #nro de epocas
+    # gere = Gerenciador(0.01, entradas_X, targets_Y)
+    # innit = gere.iniciaRede(2) 
+    # if not innit: return
+    # gere.printaRede()
+    # gere.MLP_treinamento(4000) #nro de epocas
+
+    a = Gerenciador(0.01, entradas_X, targets_Y)
+    m = a.geraMatrizDeConfusao("log/saidas_teste.txt")
+    acuracia = a.avaliaAcuracia(m)
+    recalls = a.avaliaRecall(m)
+    precisoes = a.avaliaPrecisao(m)
+    f1 = a.avaliaF1Score(precisoes, recalls)
+    a.criaLogSimples(acuracia, precisoes, recalls, f1, m)
 
 if __name__ == "__main__":
     main()
