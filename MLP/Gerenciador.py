@@ -1,6 +1,19 @@
 from Camada import Camada
 import numpy as np
-import random
+
+##################################################################################################################
+#  Classe Gerenciador                                                                                            #
+#                                                                                                                #
+# - A classe Camada é onde estão implementadas as funções que realizam os cálculos matemáticos principais,       #
+# são esses os calculos de y_in, deltas, entre outras variáveis importantes para o processamento dos neurônios.  #
+#                                                                                                                #
+# - Para cálculos como estes é na classe camada que está presente a matriz de pesos referente ao seus neurônios, #
+# dessa forma, os neurônios são representados como as linhas da matriz de pesos presente na camada.              #
+#                                                                                                                #
+# P.S.: Em diversos cálculos foram utilizadas função do numpy, principalmente em cálculos envolvendo matrizes,   #
+# essa decisão foi tomada para otimização do código, mas cada cálculo será exemplificado na função referente.    #
+#                                                                                                                #
+##################################################################################################################
 
 class Gerenciador:
 
@@ -129,9 +142,9 @@ class Gerenciador:
 
             print(f"ÉPOCA {epoca + 1} | MSE: {MSE_epoca:.6f} | ME: {(self.menorErro-MSE_epoca):.6f}") # imprimi que época está 
 
-            #if self.earlyStopping(MSE_epoca):
-            #    print("Early Stopping")
-            #    break # Verificação se o erro da época ultrapassa a tolerância
+            if self.earlyStopping(MSE_epoca):
+                print("Early Stopping")
+                break # Verificação se o erro da época ultrapassa a tolerância
 
 
         with open("log/saidas_teste.txt", "w", encoding="utf-8") as saidas_teste:
