@@ -44,7 +44,7 @@ class Gerenciador:
         self.criaCamada(len(self.entradas[0])-1) #Cria primeira camada oculta
         for i in range(qtdCamadas-2):
             # self.criaCamada(random.randint(2, 10)) #Cria camada oculta com numero aleatoria de neuronios
-            self.criaCamada(120) #Cria camada oculta com 2 neuronios
+            self.criaCamada(160) #Cria camada oculta com 2 neuronios
         self.criaCamada(len(self.targets[0]))  #Cria camada de saida
         return True
         
@@ -78,6 +78,73 @@ class Gerenciador:
         self.cont = 0 if delta > self.tol else self.cont + 1 # número de epocas seguidas sem melhora minima
         if erro < self.menorErro: self.menorErro = erro
         return self.cont >= self.qntEpocasSemErro
+
+    def geraMatrizDeConfusao(self, saidas, gerarLog=False):
+        # Matriz de confusão
+        matriz_confusao = np.zeros((26,27))
+        matriz_saidas = np.loadtxt(saidas, dtype=float)
+
+        for resposta, gabarito in zip(matriz_saidas, self.targets):
+            classe_predita = np.argmax(resposta)
+            classe_esperada = np.argmax(gabarito)
+            if (resposta[classe_predita] < 0):
+                matriz_confusao[classe_esperada][26] += 1
+            else:
+                matriz_confusao[classe_esperada][classe_predita] += 1
+
+        if (gerarLog):
+            np.savetxt("matriz_confusao.txt", matriz_confusao, fmt="%d", delimiter=" ")
+        
+        return matriz_confusao
+
+    def avaliaAcuracia(self, matriz_confusao):
+        total_valores = np.sum(matriz_confusao)
+        total_acertos = np.trace(matriz_confusao)
+        return total_acertos / total_valores
+    
+    def avaliaRecall(self, matriz_confusao):
+        resultado_recall = np.empty(len(matriz_confusao))
+        for i, linha in enumerate(matriz_confusao):
+            total_classe = np.sum(linha)
+            resultado_recall[i] = linha[i] / total_classe
+        return resultado_recall
+    
+    def avaliaPrecisao(self, matriz_confusao):
+        resultado_precisao = np.zeros(matriz_confusao.shape[0])
+        soma_colunas = np.sum(matriz_confusao, axis=0)
+        for i in range(len(matriz_confusao)):
+            if (soma_colunas[i] == 0): soma_colunas[i] = 1
+            precisao_classe = matriz_confusao[i][i] / soma_colunas[i]
+            resultado_precisao[i] = precisao_classe
+        return resultado_precisao
+    
+    def avaliaF1Score(self, precisoes, recalls):
+        denominador = (precisoes + recalls)
+        resultado_F1 = np.divide(2 * (precisoes * recalls), denominador, out=np.zeros_like(precisoes), where=denominador!=0)
+        return resultado_F1
+    
+    def criaLogSimples(self, acuracia, vetor_precisao, vetor_recall, vetor_f1, matriz_confusao):
+        import numpy as np
+
+        np.set_printoptions(linewidth=np.inf)
+
+        with open("log_avaliacao.txt", "w", encoding="utf-8") as f:
+            f.write(f"Acuracia Global: {acuracia}\n\n")
+
+            f.write("Precisao por classe:\n")
+            f.write(str(vetor_precisao) + "\n\n")
+
+            f.write("Recall por classe:\n")
+            f.write(str(vetor_recall) + "\n\n")
+
+            f.write("F1-Score por classe:\n")
+            f.write(str(vetor_f1) + "\n\n")
+
+            f.write("Matriz de Confusao:\n")
+            f.write(str(matriz_confusao) + "\n")
+
+        print("Log salvo com sucesso!")
+
 
     def criaArrayPesosDoBackPropagation(self, pesosCamadas): #"Virando" - tranposta da matriz de pesos da camada de saida para que seja mais fácil de calcular o deltinha da camada atual
         pesosParaCalcularDelta = []
@@ -182,3 +249,5 @@ class Gerenciador:
     
     def MLP_execucao(self, ):
         pass
+
+    
