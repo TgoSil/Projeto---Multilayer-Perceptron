@@ -37,7 +37,7 @@ def main():
     innit = gere.iniciaRede(8)
     if not innit: return
     gere.printaRede()
-    gere.MLP_treinamento(100000) #nro de epocas
+    gere.MLP_treinamento(100) #nro de epocas
 
 if __name__ == "__main__":
     main()

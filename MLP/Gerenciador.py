@@ -1,10 +1,23 @@
 from Camada import Camada
 import numpy as np
-import random
+
+##################################################################################################################
+#  Classe Gerenciador                                                                                            #
+#                                                                                                                #
+# - A classe Camada é onde estão implementadas as funções que realizam os cálculos matemáticos principais,       #
+# são esses os calculos de y_in, deltas, entre outras variáveis importantes para o processamento dos neurônios.  #
+#                                                                                                                #
+# - Para cálculos como estes é na classe camada que está presente a matriz de pesos referente ao seus neurônios, #
+# dessa forma, os neurônios são representados como as linhas da matriz de pesos presente na camada.              #
+#                                                                                                                #
+# P.S.: Em diversos cálculos foram utilizadas função do numpy, principalmente em cálculos envolvendo matrizes,   #
+# essa decisão foi tomada para otimização do código, mas cada cálculo será exemplificado na função referente.    #
+#                                                                                                                #
+##################################################################################################################
 
 class Gerenciador:
 
-    def __init__(self, taxaAprendizado:float, entradas, saidas:list):
+    def __init__(self, taxaAprendizado:float, entradas, saidas:list, tolerancia:float, paciencia:int):
         self.taxaAprendizado = taxaAprendizado
         self.entradas = np.insert(entradas, 0, 1, axis=1)
         self.targets = saidas
@@ -41,6 +54,14 @@ class Gerenciador:
                 # pesos_iniciais.write(f"Camada {i+1}:\n")
                 np.savetxt(pesos_iniciais, camada.pesos, fmt='%.6f', delimiter=',')
     
+    def abrirLogErro(self):
+        with open("log/log_erro.txt", "w", encoding="utf-8") as arquivo_log:
+            arquivo_log.write("Epoca,MSE\n") 
+
+    def logErroEpoca(self, epoca: int, mse: float):
+        with open("log/log_erro.txt", "a", encoding="utf-8") as arquivo_log:
+            arquivo_log.write(f"{epoca},{mse:.6f}\n")
+    
     def logFinais(self):
         with open("log/pesos_finais.txt", "w", encoding="utf-8") as pesos_finais:
             for i, camada in enumerate(self.camadas):
@@ -69,16 +90,32 @@ class Gerenciador:
     def MLP_treinamento(self, numEpocas:int):
         i = 0
         self.logIniciais()
+        self.abrirLogErro()# Abri arquivo de log de erro
         for epoca in range(numEpocas): #Roda por um número definido de épocas (condição de parada)
             saidasFinal = []
+            erro_quadratico_total = 0.0 # Acumula o erro da época
             for linha_entrada, linha_saida  in zip(self.entradas, self.targets):
                 saidasCamadas = [] # Cada linha é uma camada e cada coluna é a resposta de um neurônio
                 deltasCamadas = [] # Cada linha é uma camada e cada coluna é o delta de um neurônio
+
                 ## Inicia FeedFoward e armazena as saidas de cada camada em um array
                 saidasCamadas.append(self.camadas[0].camadaFeedFoward(linha_entrada)) # Feedforward na primeira camada
 
                 for i_camada in range(1, len(self.camadas)): # Feedfoward nas outras camadas
                     saidasCamadas.append(self.camadas[i_camada].camadaFeedFoward(saidasCamadas[i_camada-1]))  #faz feedfoward com os resultados da camada anterior
+
+                # Calculo do erro da amostra
+
+                saida_rede = saidasCamadas[-1] # Resposta dos neuronios da camada de saída             
+                
+                if len(saida_rede) > len(linha_saida): # Verifica se a camada retorna o bias. Se sim, ignoramos ele para o calculo do erro
+                    saida_rede = saida_rede[1:] 
+
+                erro_amostra = 0.0 # Erro da amostra atual/imagem atual
+                for t_k, y_k in zip(linha_saida, saida_rede): # Calcula o erro da amostra atual ou seja da imagem específica
+                    erro_amostra += (t_k - y_k) ** 2
+                
+                erro_quadratico_total += erro_amostra # Erro Quadrático Total (uma vez que não estamos divindo pelo número de amostras ainda!)
 
                 deltasCamadas.insert(0, # Armazena deltas da camada de output
                     self.camadas[-1].camadaOutputBackPropagation(
@@ -96,16 +133,19 @@ class Gerenciador:
                 self.camadas[0].camadaUpdate(deltasCamadas[0], linha_entrada, self.taxaAprendizado)
                 for i in range(1, len(self.camadas)):
                     self.camadas[i].camadaUpdate(deltasCamadas[i], saidasCamadas[i-1], self.taxaAprendizado)
-                saidasFinal.append(saidasCamadas[len(saidasCamadas)-1]) #pega valores da ultima camada
-            print(f"ÉPOCA {epoca + 1}") # imprimi que época está 
-            ##print(f"Saidas: ", end="") #imprime as saidas encontradas ao final dessa época
-            ##for count in range(len(saidasFinal)):
-            ##    print(f"{saidasFinal[count][1:]}", end="") #imprime as saidas encontradas ao final dessa época
-            ##print()
+                    # print(self.camadas[i].pesos)
+                saidasFinal.append(saidasCamadas[len(saidasCamadas)-1]) #pega valores da ultima camadas
+
+            N_amostra = len(self.entradas) # Numero de amostras, vai ter que muda dps dependendo do dataset usado (se é de treino, validacao ou teste)
+            MSE_epoca = erro_quadratico_total / N_amostra # Calculo do MSE
+            self.logErroEpoca(epoca + 1, MSE_epoca) # Log do erro da época
+
+            print(f"ÉPOCA {epoca + 1} | MSE: {MSE_epoca:.6f} | ME: {(self.menorErro-MSE_epoca):.6f}") # imprimi que época está 
 
             if self.earlyStopping(MSE_epoca):
                 print("Early Stopping")
                 break # Verificação se o erro da época ultrapassa a tolerância
+
 
         with open("log/saidas_teste.txt", "w", encoding="utf-8") as saidas_teste:
             saidas_teste.write("")
