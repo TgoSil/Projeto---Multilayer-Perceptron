@@ -79,7 +79,7 @@ class Gerenciador:
         if erro < self.menorErro: self.menorErro = erro
         return self.cont >= self.qntEpocasSemErro
 
-    def geraMatrizDeConfusao(self, saidas, gerarLog=False):
+    def geraMatrizDeConfusao(self, saidas):
         # Matriz de confusão
         matriz_confusao = np.zeros((26,27))
         matriz_saidas = np.loadtxt(saidas, dtype=float)
@@ -91,9 +91,6 @@ class Gerenciador:
                 matriz_confusao[classe_esperada][26] += 1
             else:
                 matriz_confusao[classe_esperada][classe_predita] += 1
-
-        if (gerarLog):
-            np.savetxt("matriz_confusao.txt", matriz_confusao, fmt="%d", delimiter=" ")
         
         return matriz_confusao
 
@@ -145,6 +142,13 @@ class Gerenciador:
 
         print("Log salvo com sucesso!")
 
+    def avalicaoCompleta(self, saidas):
+        m = self.geraMatrizDeConfusao(saidas)
+        a = self.avaliaAcuracia(m)
+        r = self.avaliaRecall(m)
+        p = self.avaliaPrecisao(m)
+        f1 = self.avaliaF1Score(m)
+        self.criaLogSimples(a, p, r, f1, m)
 
     def criaArrayPesosDoBackPropagation(self, pesosCamadas): #"Virando" - tranposta da matriz de pesos da camada de saida para que seja mais fácil de calcular o deltinha da camada atual
         pesosParaCalcularDelta = []
