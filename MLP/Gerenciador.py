@@ -125,7 +125,7 @@ class Gerenciador:
 
         np.set_printoptions(linewidth=np.inf)
 
-        with open("log_avaliacao.txt", "w", encoding="utf-8") as f:
+        with open("log/log_avaliacao.txt", "w", encoding="utf-8") as f:
             f.write(f"Acuracia Global: {acuracia}\n\n")
 
             f.write("Precisao por classe:\n")
@@ -147,7 +147,7 @@ class Gerenciador:
         a = self.avaliaAcuracia(m)
         r = self.avaliaRecall(m)
         p = self.avaliaPrecisao(m)
-        f1 = self.avaliaF1Score(m)
+        f1 = self.avaliaF1Score(p, r)
         self.criaLogSimples(a, p, r, f1, m)
 
     def criaArrayPesosDoBackPropagation(self, pesosCamadas): #"Virando" - tranposta da matriz de pesos da camada de saida para que seja mais fácil de calcular o deltinha da camada atual

@@ -13,7 +13,6 @@ def main():
 
     dir_path = Path("log").mkdir(parents=True, exist_ok=True)
 
-
     #Dataset de caracteres
     df_X = pd.read_csv("caracteres_completo/X.txt", sep=",", header=None)
     entradas_X = pd.DataFrame(df_X.iloc[:, 0:-1]).values
@@ -38,8 +37,7 @@ def main():
     print(f"Tamanho dos testes {len(X_teste)} e {len(Y_teste)}")
     gere.MLP_execucao(X_teste, Y_teste)
 
-    m = gere.geraMatrizDeConfusao("log/saidas_teste.txt")
-    gere.criaLogSimples()
+    gere.avalicaoCompleta("log/saidas_teste.txt")
 
 if __name__ == "__main__":
     main()
