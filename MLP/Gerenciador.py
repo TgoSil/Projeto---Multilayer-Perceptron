@@ -18,7 +18,7 @@ import numpy as np
 
 class Gerenciador:
 
-    def __init__(self, taxaAprendizado:float, entradas, saidas:list, tolerancia:float, paciencia:int):
+    def __init__(self, taxaAprendizado:float, entradas:list, saidas:list, tolerancia:float, paciencia:int):
         self.logger = Logger()
         self.taxaAprendizado = taxaAprendizado
         self.entradas = np.insert(entradas, 0, 1, axis=1)
@@ -113,13 +113,13 @@ class Gerenciador:
                 pesosParaCalcularDelta[j].append(pesosCamadas[i][j]) 
         return pesosParaCalcularDelta
 
-    def MLP_treinamento(self, numEpocas:int):
+    def MLP_treinamento(self, numEpocas:int, entradasValidacao:list, targetsValidacao:list):
         i = 0
+        entradasValidacao = np.insert(entradasValidacao, 0, 1, axis=1) #Coloca o Bias
         self.logger.logPesos(self.camadas,  "log/pesos_iniciais.txt")
         self.logger.abrirLogErro() # Abri arquivo de log de erro
         for epoca in range(numEpocas): #Roda por um número definido de épocas (condição de parada)
             saidasFinal = []
-            erro_quadratico_total = 0.0 # Acumula o erro da época
             for linha_entrada, linha_saida  in zip(self.entradas, self.targets):
                 saidasCamadas = [] # Cada linha é uma camada e cada coluna é a resposta de um neurônio
                 deltasCamadas = [] # Cada linha é uma camada e cada coluna é o delta de um neurônio
@@ -129,19 +129,6 @@ class Gerenciador:
 
                 for i_camada in range(1, len(self.camadas)): # Feedfoward nas outras camadas
                     saidasCamadas.append(self.camadas[i_camada].camadaFeedFoward(saidasCamadas[i_camada-1]))  #faz feedfoward com os resultados da camada anterior
-
-                # Calculo do erro da amostra
-
-                saida_rede = saidasCamadas[-1] # Resposta dos neuronios da camada de saída             
-                
-                if len(saida_rede) > len(linha_saida): # Verifica se a camada retorna o bias. Se sim, ignoramos ele para o calculo do erro
-                    saida_rede = saida_rede[1:] 
-
-                erro_amostra = 0.0 # Erro da amostra atual/imagem atual
-                for t_k, y_k in zip(linha_saida, saida_rede): # Calcula o erro da amostra atual ou seja da imagem específica
-                    erro_amostra += (t_k - y_k) ** 2
-                
-                erro_quadratico_total += erro_amostra # Erro Quadrático Total (uma vez que não estamos divindo pelo número de amostras ainda!)
 
                 deltasCamadas.insert(0, # Armazena deltas da camada de output
                     self.camadas[-1].camadaOutputBackPropagation(
@@ -162,8 +149,7 @@ class Gerenciador:
                     # print(self.camadas[i].pesos)
                 saidasFinal.append(saidasCamadas[len(saidasCamadas)-1]) #pega valores da ultima camadas
 
-            N_amostra = len(self.entradas) # Numero de amostras, vai ter que muda dps dependendo do dataset usado (se é de treino, validacao ou teste)
-            MSE_epoca = erro_quadratico_total / N_amostra # Calculo do MSE
+            MSE_epoca = self.MLP_Validacao(entradasValidacao, targetsValidacao) # Validação da época
             self.logger.logErroEpoca(epoca + 1, MSE_epoca) # Log do erro da época
 
             print(f"ÉPOCA {epoca + 1} | MSE: {MSE_epoca:.6f} | ME: {(self.menorErro-MSE_epoca):.6f}") # imprimi que época está 
@@ -177,6 +163,23 @@ class Gerenciador:
             self.logger.logSaidas(saidasFinal[count][1:], "log/saidas_treinamento.txt")
         self.logger.logPesos(self.camadas, "log/pesos_finais.txt")
     
+    def MLP_Validacao(self, entradas, saidas):
+        saidasFinal = []
+
+        for linha_entrada, linha_saida in zip(entradas, saidas):
+            saidasCamadas = []
+            saidasCamadas.append(self.camadas[0].camadaFeedFoward(linha_entrada)) #Feedfoward na primeira camada
+            
+            for i_camada in range(1, len(self.camadas)): # Feedfoward nas outras camadas
+                    saidasCamadas.append(self.camadas[i_camada].camadaFeedFoward(saidasCamadas[i_camada-1]))
+
+            saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])
+
+        erro_quadratico_total = np.sum(np.square(saidas - np.array(saidasFinal)[:, 1:]))
+        N_amostra = len(entradas) # Numero de amostras, vai ter que muda dps dependendo do dataset usado (se é de treino, validacao ou teste)
+
+        return erro_quadratico_total / N_amostra # Calculo do MSE
+
     # 1326 caracteres 266
     def MLP_execucao(self, entradas, saidas:list):
         saidasFinal = []
@@ -188,8 +191,7 @@ class Gerenciador:
             for i_camada in range(1, len(self.camadas)): # Feedfoward nas outras camadas
                     saidasCamadas.append(self.camadas[i_camada].camadaFeedFoward(saidasCamadas[i_camada-1]))
                     
-            saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])            
-            #print("terminou o feedfoward")
+            saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])
 
         self.logger.abrirLogSaidas("log/saidas_teste.txt")
         for count in range(len(saidasFinal)):

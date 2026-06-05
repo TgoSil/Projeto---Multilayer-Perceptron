@@ -23,16 +23,19 @@ def main():
     print(entradas_X)
     print(targets_Y)
 
-    X_treino = entradas_X[:1196, :]
+    X_treino = entradas_X[:1066, :]
+    X_validacao = entradas_X[-260:-130, :]
     X_teste = entradas_X[-130:, :]
-    Y_treino = targets_Y[:1196, :]
+
+    Y_treino = targets_Y[:1066, :]
+    Y_validacao = targets_Y[-260:-130, :]
     Y_teste = targets_Y[-130:, :]
 
-    gere = Gerenciador(0.02, X_treino, Y_treino, 0.00001, 100)
+    gere = Gerenciador(0.02, X_treino, Y_treino, 0.0000001, 300)
     innit = gere.iniciaRede(2) 
     if not innit: return
     gere.printaRede()
-    gere.MLP_treinamento(3000) #nro de epocas
+    gere.MLP_treinamento(3000, X_validacao, Y_validacao) #nro de epocas
 
     print(f"Tamanho dos testes {len(X_teste)} e {len(Y_teste)}")
     gere.MLP_execucao(X_teste, Y_teste)
