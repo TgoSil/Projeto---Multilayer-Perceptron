@@ -3,12 +3,16 @@
 import pandas as pd
 import numpy as np
 from Gerenciador import Gerenciador
+from pathlib import Path
 
 def main():
     #Abrir arquivo csv
     # df_AND = pd.read_csv("portas_logicas/problemAND.csv", sep=",", header=None)
     # df_OR = pd.read_csv("portas_logicas/problemOR.csv", sep=",", header=None)
     # df_XOR = pd.read_csv("portas_logicas/problemXOR.csv", sep=",", header=None)
+
+    dir_path = Path("log").mkdir(parents=True, exist_ok=True)
+
 
     #Dataset de caracteres
     df_X = pd.read_csv("caracteres_completo/X.txt", sep=",", header=None)
@@ -35,11 +39,7 @@ def main():
     gere.MLP_execucao(X_teste, Y_teste)
 
     m = gere.geraMatrizDeConfusao("log/saidas_teste.txt")
-    acuracia = gere.avaliaAcuracia(m)
-    recalls = gere.avaliaRecall(m)
-    precisoes = gere.avaliaPrecisao(m)
-    f1 = gere.avaliaF1Score(precisoes, recalls)
-    gere.criaLogSimples(acuracia, precisoes, recalls, f1, m)
+    gere.criaLogSimples()
 
 if __name__ == "__main__":
     main()
