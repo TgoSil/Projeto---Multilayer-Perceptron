@@ -3,8 +3,6 @@
 import pandas as pd
 import numpy as np
 from Gerenciador import Gerenciador
-from sklearn.model_selection import train_test_split #talvez n possa usar
-
 
 def main():
     #Abrir arquivo csv
@@ -60,7 +58,7 @@ def main():
         
         return X_treino, X_teste, Y_treino, Y_teste
 
-    # #Extrair arrays/list da entradas e saídas
+    # Extrair arrays/list da entradas e saídas
     # entradas_AND = pd.DataFrame(df_AND.iloc[:, 0:2]).values
     # saidas_AND = pd.DataFrame(df_AND.iloc[:, 2]).values
 
@@ -70,29 +68,22 @@ def main():
     # entradas_XOR = pd.DataFrame(df_XOR.iloc[:, 0:2]).values
     # saidas_XOR = pd.DataFrame(df_XOR.iloc[:, 2]).values
 
-    # camadas = iniciaRede(10, len(entradas_AND[0]), len(saidas_AND[0]))
     X_treino, X_teste, Y_treino, Y_teste = meu_train_test_split(entradas_X, targets_Y, test_size=0.2, random_state=42)
-    gere = Gerenciador(0.02, X_treino, Y_treino)
+    gere = Gerenciador(0.02, X_treino, Y_treino, 0.00001, 100)
     innit = gere.iniciaRede(2) 
     if not innit: return
     gere.printaRede()
-    gere.MLP_treinamento(100) #nro de epocas
-    # gere = Gerenciador(0.01, entradas_X, targets_Y)
-    # innit = gere.iniciaRede(2) 
-    # if not innit: return
-    # gere.printaRede()
-    # gere.MLP_treinamento(4000) #nro de epocas
-
-    a = Gerenciador(0.01, entradas_X, targets_Y)
-    m = a.geraMatrizDeConfusao("log/saidas_teste.txt")
-    acuracia = a.avaliaAcuracia(m)
-    recalls = a.avaliaRecall(m)
-    precisoes = a.avaliaPrecisao(m)
-    f1 = a.avaliaF1Score(precisoes, recalls)
-    a.criaLogSimples(acuracia, precisoes, recalls, f1, m)
+    gere.MLP_treinamento(3000) #nro de epocas
 
     print(f"Tamanho dos testes {len(X_teste)} e {len(Y_teste)}")
     gere.MLP_execucao(X_teste, Y_teste)
+
+    m = gere.geraMatrizDeConfusao("log/saidas_teste.txt")
+    acuracia = gere.avaliaAcuracia(m)
+    recalls = gere.avaliaRecall(m)
+    precisoes = gere.avaliaPrecisao(m)
+    f1 = gere.avaliaF1Score(precisoes, recalls)
+    gere.criaLogSimples(acuracia, precisoes, recalls, f1, m)
 
 if __name__ == "__main__":
     main()

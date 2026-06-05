@@ -44,7 +44,7 @@ class Gerenciador:
         self.criaCamada(len(self.entradas[0])-1) #Cria primeira camada oculta
         for i in range(qtdCamadas-2):
             # self.criaCamada(random.randint(2, 10)) #Cria camada oculta com numero aleatoria de neuronios
-            self.criaCamada(160) #Cria camada oculta com 2 neuronios
+            self.criaCamada(150) #Cria camada oculta com 150 neuronios
         self.criaCamada(len(self.targets[0]))  #Cria camada de saida
         return True
         
