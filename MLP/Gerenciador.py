@@ -1,4 +1,5 @@
 from Camada import Camada
+from Logger import Logger
 import numpy as np
 
 ##################################################################################################################
@@ -18,6 +19,7 @@ import numpy as np
 class Gerenciador:
 
     def __init__(self, taxaAprendizado:float, entradas, saidas:list, tolerancia:float, paciencia:int):
+        self.logger = Logger()
         self.taxaAprendizado = taxaAprendizado
         self.entradas = np.insert(entradas, 0, 1, axis=1)
         self.targets = saidas
@@ -47,31 +49,6 @@ class Gerenciador:
             self.criaCamada(150) #Cria camada oculta com 150 neuronios
         self.criaCamada(len(self.targets[0]))  #Cria camada de saida
         return True
-        
-    def logIniciais(self):
-        with open("log/pesos_iniciais.txt", "w", encoding="utf-8") as pesos_iniciais:
-            for i, camada in enumerate(self.camadas):
-                # pesos_iniciais.write(f"Camada {i+1}:\n")
-                np.savetxt(pesos_iniciais, camada.pesos, fmt='%.6f', delimiter=',')
-    
-    def abrirLogErro(self):
-        with open("log/log_erro.txt", "w", encoding="utf-8") as arquivo_log:
-            arquivo_log.write("Epoca,MSE\n") 
-
-    def logErroEpoca(self, epoca: int, mse: float):
-        with open("log/log_erro.txt", "a", encoding="utf-8") as arquivo_log:
-            arquivo_log.write(f"{epoca},{mse:.6f}\n")
-    
-    def logFinais(self):
-        with open("log/pesos_finais.txt", "w", encoding="utf-8") as pesos_finais:
-            for i, camada in enumerate(self.camadas):
-                # pesos_finais.write(f"Camada {i+1}:\n")
-                np.savetxt(pesos_finais, camada.pesos, fmt='%.6f', delimiter=',')
-
-    def logSaidas(self, saidas:list, nomeArq):
-        with open(nomeArq, "a", encoding="utf-8") as saidas_teste:
-            np.savetxt(saidas_teste, saidas, fmt='%.6f', delimiter=',', newline=' ')
-            saidas_teste.write("\n")
 
     def earlyStopping(self, erro:float): 
         delta = self.menorErro - erro
@@ -119,28 +96,6 @@ class Gerenciador:
         denominador = (precisoes + recalls)
         resultado_F1 = np.divide(2 * (precisoes * recalls), denominador, out=np.zeros_like(precisoes), where=denominador!=0)
         return resultado_F1
-    
-    def criaLogSimples(self, acuracia, vetor_precisao, vetor_recall, vetor_f1, matriz_confusao):
-        import numpy as np
-
-        np.set_printoptions(linewidth=np.inf)
-
-        with open("log/log_avaliacao.txt", "w", encoding="utf-8") as f:
-            f.write(f"Acuracia Global: {acuracia}\n\n")
-
-            f.write("Precisao por classe:\n")
-            f.write(str(vetor_precisao) + "\n\n")
-
-            f.write("Recall por classe:\n")
-            f.write(str(vetor_recall) + "\n\n")
-
-            f.write("F1-Score por classe:\n")
-            f.write(str(vetor_f1) + "\n\n")
-
-            f.write("Matriz de Confusao:\n")
-            f.write(str(matriz_confusao) + "\n")
-
-        print("Log salvo com sucesso!")
 
     def avalicaoCompleta(self, saidas):
         m = self.geraMatrizDeConfusao(saidas)
@@ -148,7 +103,7 @@ class Gerenciador:
         r = self.avaliaRecall(m)
         p = self.avaliaPrecisao(m)
         f1 = self.avaliaF1Score(p, r)
-        self.criaLogSimples(a, p, r, f1, m)
+        self.logger.criaLogSimples(a, p, r, f1, m)
 
     def criaArrayPesosDoBackPropagation(self, pesosCamadas): #"Virando" - tranposta da matriz de pesos da camada de saida para que seja mais fácil de calcular o deltinha da camada atual
         pesosParaCalcularDelta = []
@@ -160,8 +115,8 @@ class Gerenciador:
 
     def MLP_treinamento(self, numEpocas:int):
         i = 0
-        self.logIniciais()
-        self.abrirLogErro()# Abri arquivo de log de erro
+        self.logger.logPesos(self.camadas,  "log/pesos_iniciais.txt")
+        self.logger.abrirLogErro() # Abri arquivo de log de erro
         for epoca in range(numEpocas): #Roda por um número definido de épocas (condição de parada)
             saidasFinal = []
             erro_quadratico_total = 0.0 # Acumula o erro da época
@@ -209,7 +164,7 @@ class Gerenciador:
 
             N_amostra = len(self.entradas) # Numero de amostras, vai ter que muda dps dependendo do dataset usado (se é de treino, validacao ou teste)
             MSE_epoca = erro_quadratico_total / N_amostra # Calculo do MSE
-            self.logErroEpoca(epoca + 1, MSE_epoca) # Log do erro da época
+            self.logger.logErroEpoca(epoca + 1, MSE_epoca) # Log do erro da época
 
             print(f"ÉPOCA {epoca + 1} | MSE: {MSE_epoca:.6f} | ME: {(self.menorErro-MSE_epoca):.6f}") # imprimi que época está 
 
@@ -217,39 +172,10 @@ class Gerenciador:
                 print("Early Stopping")
                 break # Verificação se o erro da época ultrapassa a tolerância
 
-
-        with open("log/saidas_teste.txt", "w", encoding="utf-8") as saidas_teste:
-            saidas_teste.write("")
+        self.logger.abrirLogSaidas("log/saidas_treinamento.txt")
         for count in range(len(saidasFinal)):
-            self.logSaidas(saidasFinal[count][1:], "log/saidas_treinamento.txt")
-        self.logFinais()
-
-
-
-    def MLP_teste(self):
-        matriz = np.loadtxt('log/pesos_finais.txt', delimiter=',')
-        ##print(matriz)
-        for camada in self.camadas:
-            for i in range(len(camada.pesos)):
-                for j in range(len(camada.pesos[0])):
-                    camada.pesos[i][j] = matriz[i][j]
-        
-    #     saidasFinal = []
-    #     for linha_entrada in self.entradas:
-    #         saidasCamadas = [] # Cada linha é uma camada e cada coluna é a resposta de um neurônio
-    #         ## Inicia FeedFoward e armazena as saidas de cada camada em um array
-    #         saidasCamadas.append(self.camadas[0].camadaFeedFoward(linha_entrada)) # Feedforward na primeira camada
-
-    #         for i_camada in range(1, len(self.camadas)): # Feedfoward nas outras camadas
-    #             saidasCamadas.append(self.camadas[i_camada].camadaFeedFoward(saidasCamadas[i_camada-1]))
-            
-    #         saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])
-        
-    #     ##for count in range(len(saidasFinal)):
-    #             ##print(f"{saidasFinal[count][1:]}", end="")
-
-    #     self.logIniciais()
-
+            self.logger.logSaidas(saidasFinal[count][1:], "log/saidas_treinamento.txt")
+        self.logger.logPesos(self.camadas, "log/pesos_finais.txt")
     
     # 1326 caracteres 266
     def MLP_execucao(self, entradas, saidas:list):
@@ -265,8 +191,7 @@ class Gerenciador:
             saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])            
             #print("terminou o feedfoward")
 
-        with open("log/saidas_teste.txt", "w", encoding="utf-8") as saidas_teste: # "log/saidas_teste.txt"
-            saidas_teste.write("")
+        self.logger.abrirLogSaidas("log/saidas_teste.txt")
         for count in range(len(saidasFinal)):
-            self.logSaidas(saidasFinal[count][1:], "log/saidas_teste.txt") # Escreve as saidas
+            self.logger.logSaidas(saidasFinal[count][1:], "log/saidas_teste.txt") # Escreve as saidas
        
