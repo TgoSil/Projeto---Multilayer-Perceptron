@@ -1,6 +1,17 @@
 import numpy as np
 from Camada import Camada
 
+##################################################################################################################
+#  Classe Logger                                                                                                 #
+#                                                                                                                #
+# - A classe Logger é responsável por gerenciar a criação e o funcionamento dos arquivos de log, coordenando     #
+#   as operações de escrita de informações durante o processo de treinamento, teste e validação.                 #
+#                                                                                                                #
+# - É na classe Logger que as funções de log são chamadas, na ordem correta, para realizar o registro das        #
+# informações durante o processo de treinamento, teste e validação.                                              #
+#                                                                                                                #
+##################################################################################################################
+
 class Logger:
     
     def criaLogSimples(self, acuracia, vetor_precisao, vetor_recall, vetor_f1, matriz_confusao):
