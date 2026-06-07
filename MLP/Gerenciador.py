@@ -28,7 +28,7 @@ class Gerenciador:
     # | tolerancia: Um número flutuante que define a tolerância para o critério de parada do treinamento.
     # | paciencia: Um número inteiro que define o número de épocas consecutivas sem melhoria mínima no 
     # | erro para acionar o critério de parada do treinamento.
-
+    # | epocas_executadas: Um número inteiro que representa o número de épocas realizadas durante o treinamento, inicializado como 0 e atualizado ao longo do processo.
     def __init__(self, taxaAprendizado:float, entradas:list, saidas:list, tolerancia:float, paciencia:int):
         self.logger = Logger()
         self.taxaAprendizado = taxaAprendizado
@@ -39,6 +39,7 @@ class Gerenciador:
         self.qntEpocasSemErro = paciencia
         self.cont = 0
         self.menorErro = float('inf')
+        self.epocas_executadas = 0 
 
     # Criação de camadas
     # A função criaCamada é responsável por criar uma nova camada na rede neural, utilizando a classe Camada para isso.
@@ -72,16 +73,18 @@ class Gerenciador:
 
     # def iniciaRede (int qtdCamadas)
     # | qtdCamadas: Um número inteiro que representa a quantidade total de camadas que a rede neural deve ter.
+    # | qtdNeuronsCamadaOculta: Um número inteiro que representa a quantidade de neurônios na camada oculta.
     # | return: Um valor booleano que indica se a rede foi iniciada com sucesso (True) ou se houve um erro devido à quantidade de camadas 
     # | ser menor que 2 (False).
 
-    def iniciaRede(self, qtdCamadas:int):
+    def iniciaRede(self, qtdCamadas:int, qtdNeuronsCamadaOculta:int):
         if (qtdCamadas < 2): 
             print("VALORES MENORES QUE 2 NÃO PERMITIDOS!!\n(Não é possível criar uma rede sem pelo menos uma camada oculta e uma de saída)")
             return False
-        self.criaCamada(len(self.entradas[0])-1) #Cria primeira camada oculta
+        self.criaCamada(qtdNeuronsCamadaOculta) #Cria primeira camada oculta
         for i in range(qtdCamadas-2):
-            self.criaCamada(150) #Cria camada oculta com 150 neuronios (para o problema caracteres completo)
+            # self.criaCamada(random.randint(2, 10)) #Cria camada oculta com numero aleatoria de neuronios
+            self.criaCamada(qtdNeuronsCamadaOculta) #Cria camada oculta com 150 neuronios
         self.criaCamada(len(self.targets[0]))  #Cria camada de saida
         return True
 
@@ -267,12 +270,18 @@ class Gerenciador:
                     self.camadas[i].camadaUpdate(deltasCamadas[i], saidasCamadas[i-1], self.taxaAprendizado)
                 saidasFinal.append(saidasCamadas[len(saidasCamadas)-1]) # Pega valores da ultima camada.
 
-            MSE_epoca = self.MLP_Validacao(entradasValidacao, targetsValidacao) # Validação da época
-            self.logger.logErroEpoca(epoca + 1, MSE_epoca) # Log do erro da época
+            # Calcula o MSE de Treino
+            erro_quadratico_treino = np.sum(np.square(self.targets - np.array(saidasFinal)[:, 1:]))
+            MSE_treino = erro_quadratico_treino / len(self.entradas)
 
-            print(f"ÉPOCA {epoca + 1} | MSE: {MSE_epoca:.6f} | ME: {(self.menorErro-MSE_epoca):.6f}") # Exibe que época está 
+            # Calcula o MSE de Validação 
+            MSE_validacao = self.MLP_Validacao(entradasValidacao, targetsValidacao) # Validação da época
+            print(f"ÉPOCA {epoca + 1} | MSE Treino: {MSE_treino:.6f} | MSE Validação: {MSE_validacao:.6f} | ME: {(self.menorErro-MSE_validacao):.6f}") # Exibe que época está 
 
-            if self.earlyStopping(MSE_epoca):
+            self.logger.logErroEpoca(epoca + 1, MSE_treino, MSE_validacao) # Log do erro da época, tanto de treino quanto de validação
+            self.epocas_executadas = epoca + 1 # Atualiza o número de épocas executadas
+
+            if self.earlyStopping(MSE_validacao):
                 print("Early Stopping")
                 break # Verificação se o erro da época ultrapassa a tolerância
 
@@ -280,7 +289,8 @@ class Gerenciador:
         for count in range(len(saidasFinal)):
             self.logger.logSaidas(saidasFinal[count][1:], "log/saidas_treinamento.txt")
         self.logger.logPesos(self.camadas, "log/pesos_finais.txt")
-    
+
+
     # Validação da rede
     # A função MLP_Validacao é responsável por realizar a validação da rede neural, calculando o erro quadrático médio (MSE) 
     # com base nas saídas da rede e nas saídas esperadas (targets). Ela recebe como parâmetros as entradas e as saídas de validação, 
