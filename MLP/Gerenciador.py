@@ -218,7 +218,9 @@ class Gerenciador:
         r = self.avaliaRecall(m)
         p = self.avaliaPrecisao(m)
         f1 = self.avaliaF1Score(p, r)
-        self.logger.criaLogSimples(a, p, r, f1, m)
+        # self.logger.criaLogSimples(a, p, r, f1, m)
+        print(f"Acurácia: {a}")
+        return a
 
     # Treinamento da rede
     # A função MLP_treinamento é responsável por realizar o processo de treinamento da rede neural, utilizando o algoritmo de 
@@ -235,11 +237,11 @@ class Gerenciador:
     # | targetsValidacao: Uma lista de listas, onde cada sublista representa um conjunto de saídas esperadas correspondentes às entradas
     # | de validação.
 
-    def MLP_treinamento(self, numEpocas:int, entradasValidacao:list, targetsValidacao:list):
+    def MLP_treinamento(self, numEpocas:int, entradasValidacao:list, targetsValidacao:list, caminho_logs="log/"):
         i = 0
         entradasValidacao = np.insert(entradasValidacao, 0, 1, axis=1) #Coloca o Bias
-        self.logger.logPesos(self.camadas,  "log/pesos_iniciais.txt")
-        self.logger.abrirLogErro() # Abre arquivo de log de erro
+        self.logger.logPesos(self.camadas,  f"{caminho_logs}pesos_iniciais.txt")
+        self.logger.abrirLogErro(f"{caminho_logs}log_erro.txt") # Abre arquivo de log de erro
         for epoca in range(numEpocas): #Roda por um número definido de épocas
             saidasFinal = []
             for linha_entrada, linha_saida  in zip(self.entradas, self.targets):
@@ -276,19 +278,19 @@ class Gerenciador:
 
             # Calcula o MSE de Validação 
             MSE_validacao = self.MLP_Validacao(entradasValidacao, targetsValidacao) # Validação da época
-            print(f"ÉPOCA {epoca + 1} | MSE Treino: {MSE_treino:.6f} | MSE Validação: {MSE_validacao:.6f} | ME: {(self.menorErro-MSE_validacao):.6f}") # Exibe que época está 
+            if (epoca % 100 == 0): print(f"ÉPOCA {epoca + 1} | MSE Treino: {MSE_treino:.6f} | MSE Validação: {MSE_validacao:.6f} | ME: {(self.menorErro-MSE_validacao):.6f}") # Exibe que época está 
 
-            self.logger.logErroEpoca(epoca + 1, MSE_treino, MSE_validacao) # Log do erro da época, tanto de treino quanto de validação
+            self.logger.logErroEpoca(epoca + 1, MSE_treino, MSE_validacao, f"{caminho_logs}log_erro.txt") # Log do erro da época, tanto de treino quanto de validação
             self.epocas_executadas = epoca + 1 # Atualiza o número de épocas executadas
 
             if self.earlyStopping(MSE_validacao):
                 print("Early Stopping")
                 break # Verificação se o erro da época ultrapassa a tolerância
 
-        self.logger.abrirLogSaidas("log/saidas_treinamento.txt")
+        self.logger.abrirLogSaidas(f"{caminho_logs}saidas_treinamento.txt")
         for count in range(len(saidasFinal)):
-            self.logger.logSaidas(saidasFinal[count][1:], "log/saidas_treinamento.txt")
-        self.logger.logPesos(self.camadas, "log/pesos_finais.txt")
+            self.logger.logSaidas(saidasFinal[count][1:], f"{caminho_logs}saidas_treinamento.txt")
+        self.logger.logPesos(self.camadas, f"{caminho_logs}pesos_finais.txt")
 
 
     # Validação da rede
@@ -335,7 +337,7 @@ class Gerenciador:
     # | entradas: Uma lista de listas, onde cada sublista representa um conjunto de entradas para o conjunto de teste.
     # | saidas: Uma lista de listas, onde cada sublista representa um conjunto de saídas esperadas correspondentes às entradas de teste.
     
-    def MLP_execucao(self, entradas, saidas:list):
+    def MLP_execucao(self, entradas, saidas:list, caminho_logs="log/saidas_teste.txt"):
         saidasFinal = []
         entradas = np.insert(entradas, 0, 1, axis=1) #Coloca o Bias
         for linha_entrada, linha_saida in zip(entradas, saidas):
@@ -347,7 +349,7 @@ class Gerenciador:
                     
             saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])
 
-        self.logger.abrirLogSaidas("log/saidas_teste.txt")
+        self.logger.abrirLogSaidas(caminho_logs)
         for count in range(len(saidasFinal)):
-            self.logger.logSaidas(saidasFinal[count][1:], "log/saidas_teste.txt") # Escreve as saidas
+            self.logger.logSaidas(saidasFinal[count][1:], caminho_logs) # Escreve as saidas
        

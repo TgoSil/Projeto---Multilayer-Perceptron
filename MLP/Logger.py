@@ -14,12 +14,13 @@ from Camada import Camada
 
 class Logger:
     
-    def criaLogSimples(self, acuracia, vetor_precisao, vetor_recall, vetor_f1, matriz_confusao):
+    # Parâmetro "caminho" adicionado com fallback para o original
+    def criaLogSimples(self, acuracia, vetor_precisao, vetor_recall, vetor_f1, matriz_confusao, caminho):
         import numpy as np
 
         np.set_printoptions(linewidth=np.inf)
 
-        with open("log/log_avaliacao.txt", "w", encoding="utf-8") as f:
+        with open(caminho, "w", encoding="utf-8") as f:
             f.write(f"Acuracia Global: {acuracia}\n\n")
 
             f.write("Precisao por classe:\n")
@@ -41,12 +42,14 @@ class Logger:
             for camada in camadas:
                 np.savetxt(pesos, camada.pesos, fmt='%.6f', delimiter=',')
 
-    def abrirLogErro(self):
-        with open("log/log_erro.txt", "w", encoding="utf-8") as arquivo_log:
+    # Parâmetro "caminho" adicionado com fallback para o original
+    def abrirLogErro(self, caminho):
+        with open(caminho, "w", encoding="utf-8") as arquivo_log:
             arquivo_log.write("Epoca,MSE_Treino,MSE_Validacao\n")
 
-    def logErroEpoca(self, epoca: int, mse_treino: float, mse_validacao: float):
-        with open("log/log_erro.txt", "a", encoding="utf-8") as arquivo:
+    # Parâmetro "caminho" adicionado com fallback para o original
+    def logErroEpoca(self, epoca: int, mse_treino: float, mse_validacao: float, caminho):
+        with open(caminho, "a", encoding="utf-8") as arquivo:
             arquivo.write(f"{epoca},{mse_treino:.6f},{mse_validacao:.6f}\n")
 
     def abrirLogSaidas(self, nomeArq):
