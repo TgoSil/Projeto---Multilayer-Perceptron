@@ -64,11 +64,11 @@ def main():
     # Gerenciador da rede neural
     np.random.seed(42)
     # Execução 1: 150 neurônios na camada oculta, taxa de aprendizado de 0.02, limite de épocas de 3000, paciência de 100 e tolerância de 0.00001.
-    gere = Gerenciador(0.00715, X_treino, Y_treino, 0.00001, 400) # taxa de aprendizado, entradas, targets, erro mínimo, paciência
-    innit = gere.iniciaRede(2, 30) # nro de camadas da rede neural, nro de neurônios na camada oculta
+    gere = Gerenciador(0.02, X_treino, Y_treino, 0.00001, 1000) # taxa de aprendizado, entradas, targets, erro mínimo, paciência
+    innit = gere.iniciaRede(2, 35) # nro de camadas da rede neural, nro de neurônios na camada oculta
     if not innit: return
     gere.printaRede() # Imprime a estrutura da rede neural
-    gere.MLP_treinamento(3000, X_validacao, Y_validacao) # nro de epocas, entradas de validação, targets de validação
+    gere.MLP_treinamento(6000, X_validacao, Y_validacao) # nro de epocas, entradas de validação, targets de validação
 
     print(f"Tamanho dos testes {len(X_teste)} e {len(Y_teste)}") # Imprime o tamanho dos dados de teste para verificar se estão corretos
     gere.MLP_execucao(X_teste, Y_teste) # Executa a rede neural com os dados de teste
