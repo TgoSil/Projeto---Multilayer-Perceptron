@@ -194,13 +194,13 @@ if __name__ == "__main__":
     Y_treino = Y_restante[:-130, :]
     # ------------------------------------------
 
-    num_nucleos = multiprocessing.cpu_count()
+    num_nucleos = multiprocessing.cpu_count()-2
     print(f"Detectados {num_nucleos} núcleos lógicos.")
     
     os.makedirs(PASTA_RESULTADOS, exist_ok=True)
     print(f"Diretório '{PASTA_RESULTADOS}' preparado para armazenar os logs.")
     
-    quantidade_testes = 1200
+    quantidade_testes = 80
     lista_configs = gera_configs_unicas(quantidade_testes)
     
     # Adicionando X_teste e Y_teste no empacotamento, enviando as listas de hiperparâmetros e bases de dados

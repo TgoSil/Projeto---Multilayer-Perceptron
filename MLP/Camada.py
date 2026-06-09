@@ -1,4 +1,5 @@
 import numpy as np
+np.random.seed(42)
 
 ##################################################################################################################
 #  Classe Camada                                                                                                 #
@@ -32,7 +33,7 @@ class Camada:
         self.pesos = np.random.uniform(-0.5, 0.5, size=(qtdNeurons, qtdEntradas))
         self.values_in = []
         self.camada = qtdNeurons
-    
+
     # Função de ativação
     # A função de ativação será responsável por processar o y_in e transformá-lo na entrada do próximo neurônio.
     # A função utilizada nessa implementação foi a tangente hiperbólica, isso porque não é uma função linear,

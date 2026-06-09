@@ -28,7 +28,7 @@ class Gerenciador:
     # | tolerancia: Um número flutuante que define a tolerância para o critério de parada do treinamento.
     # | paciencia: Um número inteiro que define o número de épocas consecutivas sem melhoria mínima no 
     # | erro para acionar o critério de parada do treinamento.
-    # | epocas_executadas: Um número inteiro que representa o número de épocas realizadas durante o treinamento, inicializado como 0 e atualizado ao longo do processo.
+
     def __init__(self, taxaAprendizado:float, entradas:list, saidas:list, tolerancia:float, paciencia:int):
         self.logger = Logger()
         self.taxaAprendizado = taxaAprendizado
@@ -278,7 +278,7 @@ class Gerenciador:
 
             # Calcula o MSE de Validação 
             MSE_validacao = self.MLP_Validacao(entradasValidacao, targetsValidacao) # Validação da época
-            if (epoca % 100 == 0): print(f"ÉPOCA {epoca + 1} | MSE Treino: {MSE_treino:.6f} | MSE Validação: {MSE_validacao:.6f} | ME: {(self.menorErro-MSE_validacao):.6f}") # Exibe que época está 
+            print(f"ÉPOCA {epoca + 1} | MSE Treino: {MSE_treino:.6f} | MSE Validação: {MSE_validacao:.6f} | ME: {(self.menorErro-MSE_validacao):.6f}") # Exibe que época está 
 
             self.logger.logErroEpoca(epoca + 1, MSE_treino, MSE_validacao, f"{caminho_logs}log_erro.txt") # Log do erro da época, tanto de treino quanto de validação
             self.epocas_executadas = epoca + 1 # Atualiza o número de épocas executadas
