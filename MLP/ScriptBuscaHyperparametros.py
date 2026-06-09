@@ -5,6 +5,7 @@ import os
 from Gerenciador import Gerenciador
 
 # Nome da pasta onde todos os CSVs serão organizados
+PASTA_SAIDAS = "saidas_script"
 PASTA_RESULTADOS = "resultados_automacao"
 
 # Gerador de configurações de hyperparâmetros únicas
@@ -48,12 +49,10 @@ def gera_configs_unicas(total_configs=1200):
             
     return lista_configs
 
-# Função de treinamento
 def worker_treinamento(params):
-    # Semente travada para garantir reprodutibilidade na inicialização
+    # Semente travada para garantir reprodutibilidade
     np.random.seed(42)
 
-    # Agora recebemos X_teste e Y_teste também
     config, X_treino, Y_treino, X_validacao, Y_validacao, X_teste, Y_teste = params
     
     nome_processo = multiprocessing.current_process().name
@@ -71,25 +70,32 @@ def worker_treinamento(params):
     if not innit:
         return f"[{nome_processo}] Erro ao inicializar rede."
     
-    # O Treinamento e o Early Stopping usam X_validacao
-    gere.MLP_treinamento(config["nro_total_epocas"], X_validacao, Y_validacao)
+    pasta_processo = os.path.join("log", PASTA_SAIDAS, nome_processo)
+    os.makedirs(pasta_processo, exist_ok=True)
     
-    # A Validação (Acurácia Final) agora usa RIGOROSAMENTE X_teste (Igual a main.py)
-    acertos = 0
-    total = len(X_teste)
-    X_teste_bias = np.insert(X_teste, 0, 1, axis=1)
+    # Garante a barra no final (os.sep) para o Gerenciador poder concatenar os nomes
+    caminho_logs_treino = pasta_processo + os.sep 
     
-    for linha_entrada, linha_saida in zip(X_teste_bias, Y_teste):
-        saida_camada = gere.camadas[0].camadaFeedFoward(linha_entrada)
-        saida_final = gere.camadas[1].camadaFeedFoward(saida_camada)
-        
-        classe_predita = np.argmax(saida_final[1:])
-        classe_esperada = np.argmax(linha_saida)
-        
-        if classe_predita == classe_esperada:
-            acertos += 1
-            
-    acuracia_final = round((acertos / total) * 100, 2)
+    # 1. O Treinamento usa a pasta exclusiva do núcleo
+    gere.MLP_treinamento(config["nro_total_epocas"], X_validacao, Y_validacao, caminho_logs=caminho_logs_treino)
+    
+    # 2. A Execução gera o arquivo dentro da pasta do núcleo
+    caminho_txt_saidas = os.path.join(pasta_processo, "saidas_teste.txt")
+    if os.path.exists(caminho_txt_saidas):
+        try: os.remove(caminho_txt_saidas) 
+        except: pass
+
+    # Lembrete: O seu Gerenciador agora espera um 'caminho_arquivo' (corrigimos isso na última mensagem)
+    gere.MLP_execucao(X_teste, Y_teste, caminho_txt_saidas)
+    
+    # 3. A Avaliação lê o arquivo isolado
+    matriz_de_confusao = gere.geraMatrizDeConfusao(caminho_txt_saidas, Y_teste)
+    acuracia_final = round(gere.avaliaAcuracia(matriz_de_confusao), 4)
+    
+    # Apaga apenas o TXT de saídas para economizar espaço
+    try: os.remove(caminho_txt_saidas)
+    except: pass
+
     epocas_rodadas = gere.epocas_executadas
     
     linha_resultado = (
@@ -101,8 +107,7 @@ def worker_treinamento(params):
     with open(nome_arquivo_csv, "a", encoding="utf-8") as f:
         f.write(linha_resultado)
         
-    return f"Neurônios: {config['nro_neuronios']} | Taxa: {config['taxa_aprendizado']} -> Acurácia: {acuracia_final}%"
-
+    return f"Neurônios: {config['nro_neuronios']} | Taxa: {config['taxa_aprendizado']} -> Acurácia: {acuracia_final}"
 # Main
 if __name__ == "__main__":
     print("Carregando bases de dados na memória principal...")
@@ -113,7 +118,6 @@ if __name__ == "__main__":
     df_Y = np.where(df_Y == 0, -1, df_Y)
     targets_Y = df_Y
 
-    # --- NOVO FATIAMENTO IDÊNTICO À MAIN.PY ---
     # 1. Separando o conjunto de Teste (Últimos 130)
     X_teste = entradas_X[-130:, :]
     Y_teste = targets_Y[-130:, :]

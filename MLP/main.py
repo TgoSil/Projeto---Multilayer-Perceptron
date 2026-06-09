@@ -31,7 +31,7 @@ def main():
     Y_restante = targets_Y[:-130, :]
     classes_restantes = np.argmax(Y_restante, axis=1) 
 
-    modo_validacao = 1 # altere o valor para 1 ou 2 para escolher o modo de amostragem do conjunto de validação, sendo 1 para estratificado e 2 para sequencial.
+    modo_validacao = 2 # altere o valor para 1 ou 2 para escolher o modo de amostragem do conjunto de validação, sendo 1 para estratificado e 2 para sequencial.
     if modo_validacao == 1: 
         print("Usando modo ESTRATIFICADO (5 amostras por classe).")
         classes_restantes = np.argmax(Y_restante, axis=1) 
@@ -64,8 +64,8 @@ def main():
     # Gerenciador da rede neural
     np.random.seed(42)
     # Execução 1: 150 neurônios na camada oculta, taxa de aprendizado de 0.02, limite de épocas de 3000, paciência de 100 e tolerância de 0.00001.
-    gere = Gerenciador(0.02, X_treino, Y_treino, 0.000001, 300) # taxa de aprendizado, entradas, targets, erro mínimo, paciência
-    innit = gere.iniciaRede(2, 150) # nro de camadas da rede neural, nro de neurônios na camada oculta
+    gere = Gerenciador(0.00715, X_treino, Y_treino, 0.00001, 400) # taxa de aprendizado, entradas, targets, erro mínimo, paciência
+    innit = gere.iniciaRede(2, 30) # nro de camadas da rede neural, nro de neurônios na camada oculta
     if not innit: return
     gere.printaRede() # Imprime a estrutura da rede neural
     gere.MLP_treinamento(3000, X_validacao, Y_validacao) # nro de epocas, entradas de validação, targets de validação
@@ -75,6 +75,7 @@ def main():
 
     gere.avalicaoCompleta("log/saidas_teste.txt", Y_teste) # Avaliação completa da rede neural, gerando o log de avaliação com acurácia, precisão, recall, f1-score e matriz de confusão.
 
+    
 
     # Execução 2: 150 neurônios na camada oculta, taxa de aprendizado de 0.02, limite de épocas de , paciencia de 10 e tolerância de 0.00001.
     # gere = Gerenciador(0.2, X_treino, Y_treino, 0.000001, 100) # taxa de aprendizado, entradas, targets, erro mínimo, paciência
