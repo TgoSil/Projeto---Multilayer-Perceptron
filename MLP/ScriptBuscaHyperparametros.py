@@ -50,17 +50,17 @@ def gera_configs_unicas(total_configs=1200):
 
 # Função de treinamento
 def worker_treinamento(params):
-    config, X_treino, Y_treino, X_validacao, Y_validacao = params
+    # Semente travada para garantir reprodutibilidade na inicialização
+    np.random.seed(42)
+
+    # Agora recebemos X_teste e Y_teste também
+    config, X_treino, Y_treino, X_validacao, Y_validacao, X_teste, Y_teste = params
     
     nome_processo = multiprocessing.current_process().name
     
-    # Garante que a pasta exista antes de tentar salvar (essencial para evitar erros entre processos)
     os.makedirs(PASTA_RESULTADOS, exist_ok=True)
-    
-    # Organiza o arquivo para ser criado DENTRO da pasta configurada
     nome_arquivo_csv = os.path.join(PASTA_RESULTADOS, f"resultado_{nome_processo}.csv")
     
-    # Cria o cabeçalho se o arquivo ainda não existir nesta pasta
     if not os.path.exists(nome_arquivo_csv):
         with open(nome_arquivo_csv, "w", encoding="utf-8") as f:
             f.write("acuracia,nro_epocas_executada,nro_neuronios,taxa_aprendizado,erro_minimo,paciencia,nro_total_epocas_limite\n")
@@ -71,14 +71,15 @@ def worker_treinamento(params):
     if not innit:
         return f"[{nome_processo}] Erro ao inicializar rede."
     
+    # O Treinamento e o Early Stopping usam X_validacao
     gere.MLP_treinamento(config["nro_total_epocas"], X_validacao, Y_validacao)
     
-    # Validação em memória
+    # A Validação (Acurácia Final) agora usa RIGOROSAMENTE X_teste (Igual a main.py)
     acertos = 0
-    total = len(X_validacao)
-    X_val_bias = np.insert(X_validacao, 0, 1, axis=1)
+    total = len(X_teste)
+    X_teste_bias = np.insert(X_teste, 0, 1, axis=1)
     
-    for linha_entrada, linha_saida in zip(X_val_bias, Y_validacao):
+    for linha_entrada, linha_saida in zip(X_teste_bias, Y_teste):
         saida_camada = gere.camadas[0].camadaFeedFoward(linha_entrada)
         saida_final = gere.camadas[1].camadaFeedFoward(saida_camada)
         
@@ -112,23 +113,34 @@ if __name__ == "__main__":
     df_Y = np.where(df_Y == 0, -1, df_Y)
     targets_Y = df_Y
 
-    X_validacao = entradas_X[-130:, :]
-    Y_validacao = targets_Y[-130:, :]
-    X_treino = entradas_X[:-130, :]
-    Y_treino = targets_Y[:-130, :]
+    # --- NOVO FATIAMENTO IDÊNTICO À MAIN.PY ---
+    # 1. Separando o conjunto de Teste (Últimos 130)
+    X_teste = entradas_X[-130:, :]
+    Y_teste = targets_Y[-130:, :]
+
+    # 2. O Restante para separar Treino e Validação
+    X_restante = entradas_X[:-130, :]
+    Y_restante = targets_Y[:-130, :]
+
+    # 3. Separando Validação (Penúltimos 130) e Treino (O resto que sobrou)
+    X_validacao = X_restante[-130:, :]
+    Y_validacao = Y_restante[-130:, :]
+    X_treino = X_restante[:-130, :]
+    Y_treino = Y_restante[:-130, :]
+    # ------------------------------------------
 
     num_nucleos = multiprocessing.cpu_count()
     print(f"Detectados {num_nucleos} núcleos lógicos.")
     
-    # Cria a pasta de resultados no processo principal também por segurança
     os.makedirs(PASTA_RESULTADOS, exist_ok=True)
     print(f"Diretório '{PASTA_RESULTADOS}' preparado para armazenar os logs.")
     
     quantidade_testes = 1200
     lista_configs = gera_configs_unicas(quantidade_testes)
     
+    # Adicionando X_teste e Y_teste no empacotamento
     pacotes_de_trabalho = [
-        (config, X_treino, Y_treino, X_validacao, Y_validacao) 
+        (config, X_treino, Y_treino, X_validacao, Y_validacao, X_teste, Y_teste) 
         for config in lista_configs
     ]
     
