@@ -4,11 +4,34 @@ import multiprocessing
 import os
 from Gerenciador import Gerenciador
 
+##################################################################################################################
+#  Script de Busca de Hiperparâmetros                                                                            #
+#                                                                                                                #
+# - Este script é responsável por automatizar a execução e o teste de múltiplas configurações de hiperparâmetros #
+#   para a rede neural. Ele utiliza processamento paralelo (multiprocessing) para agilizar o treinamento e a     #
+#   validação de diferentes arquiteturas e taxas de aprendizado simultaneamente.                                 #
+#                                                                                                                #
+# - É neste arquivo que definimos alguns "perfis de teste" e executamos a classe Gerenciador em múltiplos     #
+#   múltiplos núcleos lógicos do processador. O script garante o isolamento de pastas, logs e resultados         #
+#   (arquivos CSV) para cada processo trabalhador (worker), evitando conflitos de escrita.                       #
+#                                                                                                                #
+##################################################################################################################
+
 # Nome da pasta onde todos os CSVs serão organizados
 PASTA_SAIDAS = "saidas_script"
 PASTA_RESULTADOS = "resultados_automacao"
 
-# Gerador de configurações de hyperparâmetros únicas
+
+# Gerador de configurações de hiperparâmetros
+# A função gera_configs_unicas é responsável por criar combinações (perfis) de teste contendo diferentes valores
+# para a quantidade de neurônios, taxa de aprendizado, paciência e épocas limite. Ela sorteia esses valores com base
+# em perfis pré-definidos (4: rápido/cirurgião, 5: médio/equilibrista, 6: longo/maratonista) e garante que nenhuma
+# configuração repetida seja enviada para os processos de treinamento.
+
+# def gera_configs_unicas (int total_configs)
+# | total_configs: Um número inteiro que representa o limite máximo de combinações únicas a serem geradas.
+# | return: Uma lista de dicionários, onde cada dicionário contém uma configuração única de hiperparâmetros a ser testada.
+
 def gera_configs_unicas(total_configs=1200):
     configs_unicas = set()
     lista_configs = []
@@ -17,7 +40,7 @@ def gera_configs_unicas(total_configs=1200):
     
     while len(configs_unicas) < total_configs:
         perfil = np.random.choice([4, 5, 6])
-        
+
         # if perfil == 1:
         #     neuronios = int(np.random.choice([30, 45, 60, 75, 90]))
         #     taxa = round(float(np.random.uniform(0.005, 0.008)), 5)
@@ -67,6 +90,18 @@ def gera_configs_unicas(total_configs=1200):
             
     return lista_configs
 
+
+# Worker de Treinamento (Processo Isolado)
+# A função worker_treinamento representa a unidade de trabalho isolada que será executada por cada núcleo de processamento.
+# Ela recebe os parâmetros e o dataset, instancia um novo Gerenciador, treina a rede neural, realiza a validação 
+# e extrai as métricas finais (acurácia e épocas rodadas). Por fim, grava o resultado em um arquivo CSV exclusivo 
+# do núcleo que executou a tarefa, prevenindo a colisão de gravação em disco (Race Condition).
+
+# def worker_treinamento (tuple params)
+# | params: Uma tupla contendo um dicionário com a configuração de hiperparâmetros atual e os arrays NumPy 
+# | correspondentes aos conjuntos de dados (X_treino, Y_treino, X_validacao, Y_validacao, X_teste, Y_teste).
+# | return: Uma string formatada contendo o resumo do resultado da execução (Neurônios, Taxa e Acurácia) para ser exibida no console principal.
+
 def worker_treinamento(params):
     # Semente travada para garantir reprodutibilidade
     np.random.seed(42)
@@ -78,6 +113,7 @@ def worker_treinamento(params):
     os.makedirs(PASTA_RESULTADOS, exist_ok=True)
     nome_arquivo_csv = os.path.join(PASTA_RESULTADOS, f"resultado_{nome_processo}.csv")
     
+    # Cria o cabeçalho do arquivo CSV caso ele ainda não exista para o trabalhador atual
     if not os.path.exists(nome_arquivo_csv):
         with open(nome_arquivo_csv, "w", encoding="utf-8") as f:
             f.write("acuracia,nro_epocas_executada,nro_neuronios,taxa_aprendizado,erro_minimo,paciencia,nro_total_epocas_limite\n")
@@ -103,19 +139,19 @@ def worker_treinamento(params):
         try: os.remove(caminho_txt_saidas) 
         except: pass
 
-    # Lembrete: O seu Gerenciador agora espera um 'caminho_arquivo' (corrigimos isso na última mensagem)
     gere.MLP_execucao(X_teste, Y_teste, caminho_txt_saidas)
     
     # 3. A Avaliação lê o arquivo isolado
     matriz_de_confusao = gere.geraMatrizDeConfusao(caminho_txt_saidas, Y_teste)
     acuracia_final = round(gere.avaliaAcuracia(matriz_de_confusao), 4)
     
-    # Apaga apenas o TXT de saídas para economizar espaço
+    # Apaga apenas o TXT de saídas provisório para economizar espaço em disco
     try: os.remove(caminho_txt_saidas)
     except: pass
 
     epocas_rodadas = gere.epocas_executadas
     
+    # Prepara a linha de resultado a ser anexada no CSV
     linha_resultado = (
         f"{acuracia_final},{epocas_rodadas},{config['nro_neuronios']},"
         f"{config['taxa_aprendizado']},{config['erro_minimo']},"
@@ -126,9 +162,16 @@ def worker_treinamento(params):
         f.write(linha_resultado)
         
     return f"Neurônios: {config['nro_neuronios']} | Taxa: {config['taxa_aprendizado']} -> Acurácia: {acuracia_final}"
-# Main
+
+
+# Execução Principal (Main)
+# O bloco principal é o ponto de entrada do script. Ele é isolado sob a condição __name__ == "__main__" para evitar
+# que instâncias filhas (workers) re-executem este código ao serem importadas pelo multiprocessing.
+# É aqui que os dados são lidos, segmentados em Treino, Validação e Teste, e onde o Pool de processos é
+# instanciado para distribuir a carga de trabalho.
+
 if __name__ == "__main__":
-    print("Carregando bases de dados na memória principal...")
+    print("Carregando datasets igual à main.py...")
     
     df_X = pd.read_csv("caracteres_completo/X.txt", sep=",", header=None)
     entradas_X = pd.DataFrame(df_X.iloc[:, 0:-1]).values
@@ -136,7 +179,7 @@ if __name__ == "__main__":
     df_Y = np.where(df_Y == 0, -1, df_Y)
     targets_Y = df_Y
 
-    # 1. Separando o conjunto de Teste (Últimos 130)
+    # 1. Separando o conjunto de Teste (Últimos 130 exemplos)
     X_teste = entradas_X[-130:, :]
     Y_teste = targets_Y[-130:, :]
 
@@ -144,7 +187,7 @@ if __name__ == "__main__":
     X_restante = entradas_X[:-130, :]
     Y_restante = targets_Y[:-130, :]
 
-    # 3. Separando Validação (Penúltimos 130) e Treino (O resto que sobrou)
+    # 3. Separando Validação (Penúltimos 130) e Treino (O resto que sobrou da base)
     X_validacao = X_restante[-130:, :]
     Y_validacao = Y_restante[-130:, :]
     X_treino = X_restante[:-130, :]
@@ -160,7 +203,7 @@ if __name__ == "__main__":
     quantidade_testes = 1200
     lista_configs = gera_configs_unicas(quantidade_testes)
     
-    # Adicionando X_teste e Y_teste no empacotamento
+    # Adicionando X_teste e Y_teste no empacotamento, enviando as listas de hiperparâmetros e bases de dados
     pacotes_de_trabalho = [
         (config, X_treino, Y_treino, X_validacao, Y_validacao, X_teste, Y_teste) 
         for config in lista_configs
@@ -172,6 +215,7 @@ if __name__ == "__main__":
     testes_concluidos = 0
     
     try:
+        # Inicia a execução concorrente. O imap_unordered consome a fila à medida que os processos ficam ociosos.
         with multiprocessing.Pool(processes=num_nucleos) as pool:
             for retorno_worker in pool.imap_unordered(worker_treinamento, pacotes_de_trabalho):
                 testes_concluidos += 1
