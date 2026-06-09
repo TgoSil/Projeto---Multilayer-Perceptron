@@ -16,23 +16,41 @@ def gera_configs_unicas(total_configs=1200):
     print(f"Gerando {total_configs} combinações únicas de hiperparâmetros...")
     
     while len(configs_unicas) < total_configs:
-        perfil = np.random.choice(["compacta", "media", "complexa"])
+        perfil = np.random.choice([4, 5, 6])
         
-        if perfil == "compacta":
-            neuronios = int(np.random.choice([30, 45, 60, 75, 90]))
-            taxa = round(float(np.random.uniform(0.005, 0.008)), 5)
-            epocas = 3000
-            paciencia = int(np.random.choice([400, 500, 600]))
-        elif perfil == "media":
-            neuronios = int(np.random.choice([100, 150, 200, 250]))
-            taxa = round(float(np.random.uniform(0.002, 0.004)), 5)
+        # if perfil == 1:
+        #     neuronios = int(np.random.choice([30, 45, 60, 75, 90]))
+        #     taxa = round(float(np.random.uniform(0.005, 0.008)), 5)
+        #     epocas = 3000
+        #     paciencia = int(np.random.choice([400, 500, 600]))
+        # elif perfil == 2:
+        #     neuronios = int(np.random.choice([100, 150, 200, 250]))
+        #     taxa = round(float(np.random.uniform(0.002, 0.004)), 5)
+        #     epocas = 5000
+        #     paciencia = int(np.random.choice([600, 700, 800]))
+        # else: # 3
+        #     neuronios = int(np.random.choice([30, 40, 50])) 
+        #     taxa = round(float(np.random.uniform(0.001, 0.002)), 5)
+        #     epocas = 8000
+        #     paciencia = 1000
+
+        if perfil == 4:
+            neuronios = int(np.random.choice([15, 20, 25, 30]))
+            taxa = round(float(np.random.choice([0.05, 0.01, 0.005, 0.001])), 5)
             epocas = 5000
-            paciencia = int(np.random.choice([600, 700, 800]))
-        else: # complexa
-            neuronios = int(np.random.choice([30, 40, 50])) 
-            taxa = round(float(np.random.uniform(0.001, 0.002)), 5)
-            epocas = 8000
-            paciencia = 1000
+            paciencia = int(np.random.choice([500, 600]))
+            
+        elif perfil == 5:
+            neuronios = int(np.random.choice([35, 45, 55, 65, 75]))
+            taxa = round(float(np.random.choice([0.02, 0.008, 0.004, 0.001])), 5)
+            epocas = 6000
+            paciencia = int(np.random.choice([800, 1000]))
+            
+        else: # 6
+            neuronios = int(np.random.choice([80, 100, 120])) 
+            taxa = round(float(np.random.choice([0.0005, 0.0001, 0.00005])), 6)
+            epocas = 10000
+            paciencia = 1500
             
         erro_min = 0.00001
         config_tupla = (taxa, erro_min, paciencia, neuronios, epocas)
