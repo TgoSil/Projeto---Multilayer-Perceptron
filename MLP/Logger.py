@@ -14,12 +14,13 @@ from Camada import Camada
 
 class Logger:
     
-    def criaLogSimples(self, acuracia, vetor_precisao, vetor_recall, vetor_f1, matriz_confusao):
+    # Parâmetro "caminho" adicionado com fallback para o original
+    def criaLogSimples(self, acuracia, vetor_precisao, vetor_recall, vetor_f1, matriz_confusao, caminho):
         import numpy as np
 
         np.set_printoptions(linewidth=np.inf)
 
-        with open("log/log_avaliacao.txt", "w", encoding="utf-8") as f:
+        with open(caminho, "w", encoding="utf-8") as f:
             f.write(f"Acuracia Global: {acuracia}\n\n")
 
             f.write("Precisao por classe:\n")
@@ -41,13 +42,15 @@ class Logger:
             for camada in camadas:
                 np.savetxt(pesos, camada.pesos, fmt='%.6f', delimiter=',')
 
-    def abrirLogErro(self):
-        with open("log/log_erro.txt", "w", encoding="utf-8") as arquivo_log:
-            arquivo_log.write("Epoca,MSE\n") 
+    # Parâmetro "caminho" adicionado com fallback para o original
+    def abrirLogErro(self, caminho):
+        with open(caminho, "w", encoding="utf-8") as arquivo_log:
+            arquivo_log.write("Epoca,MSE_Treino,MSE_Validacao\n")
 
-    def logErroEpoca(self, epoca: int, mse: float):
-        with open("log/log_erro.txt", "a", encoding="utf-8") as arquivo_log:
-            arquivo_log.write(f"{epoca},{mse:.6f}\n")
+    # Parâmetro "caminho" adicionado com fallback para o original
+    def logErroEpoca(self, epoca: int, mse_treino: float, mse_validacao: float, caminho):
+        with open(caminho, "a", encoding="utf-8") as arquivo:
+            arquivo.write(f"{epoca},{mse_treino:.6f},{mse_validacao:.6f}\n")
 
     def abrirLogSaidas(self, nomeArq):
         with open(nomeArq, "w", encoding="utf-8") as saidas:
@@ -57,3 +60,16 @@ class Logger:
         with open(nomeArq, "a", encoding="utf-8") as saidas_teste:
             np.savetxt(saidas_teste, saidas, fmt='%.6f', delimiter=',', newline=' ')
             saidas_teste.write("\n")
+
+    def inicializa_log_benchmark(self, arquivo_nome: str, titulo: str):
+         with open(f"log/{arquivo_nome}", "w", encoding="utf-8") as arquivo_log:
+            arquivo_log.write(titulo + "\n")
+
+    def log_benchmark_resultado(self, arquivo_nome: str, titulo_secao: str, resultados: list):
+        with open(f"log/{arquivo_nome}", "a", encoding="utf-8") as arquivo_log:
+            print(titulo_secao)
+            arquivo_log.write(titulo_secao + "\n")
+            for resultado in resultados:
+                linha = f"Neurônios/Taxa/Limite: {resultado['parametro']:<5} | Épocas: {resultado['epocas']:<5} | Tempo: {resultado['minutos']}m {resultado['segundos']:.2f}s"
+                print(linha)
+                arquivo_log.write(linha + "\n")

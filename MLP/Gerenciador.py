@@ -39,6 +39,7 @@ class Gerenciador:
         self.qntEpocasSemErro = paciencia
         self.cont = 0
         self.menorErro = float('inf')
+        self.epocas_executadas = 0 
 
     # Criação de camadas
     # A função criaCamada é responsável por criar uma nova camada na rede neural, utilizando a classe Camada para isso.
@@ -72,16 +73,18 @@ class Gerenciador:
 
     # def iniciaRede (int qtdCamadas)
     # | qtdCamadas: Um número inteiro que representa a quantidade total de camadas que a rede neural deve ter.
+    # | qtdNeuronsCamadaOculta: Um número inteiro que representa a quantidade de neurônios na camada oculta.
     # | return: Um valor booleano que indica se a rede foi iniciada com sucesso (True) ou se houve um erro devido à quantidade de camadas 
     # | ser menor que 2 (False).
 
-    def iniciaRede(self, qtdCamadas:int):
+    def iniciaRede(self, qtdCamadas:int, qtdNeuronsCamadaOculta:int):
         if (qtdCamadas < 2): 
             print("VALORES MENORES QUE 2 NÃO PERMITIDOS!!\n(Não é possível criar uma rede sem pelo menos uma camada oculta e uma de saída)")
             return False
-        self.criaCamada(len(self.entradas[0])-1) #Cria primeira camada oculta
+        self.criaCamada(qtdNeuronsCamadaOculta) #Cria primeira camada oculta
         for i in range(qtdCamadas-2):
-            self.criaCamada(150) #Cria camada oculta com 150 neuronios (para o problema caracteres completo)
+            # self.criaCamada(random.randint(2, 10)) #Cria camada oculta com numero aleatoria de neuronios
+            self.criaCamada(qtdNeuronsCamadaOculta) #Cria camada oculta com 150 neuronios
         self.criaCamada(len(self.targets[0]))  #Cria camada de saida
         return True
 
@@ -215,7 +218,9 @@ class Gerenciador:
         r = self.avaliaRecall(m)
         p = self.avaliaPrecisao(m)
         f1 = self.avaliaF1Score(p, r)
-        self.logger.criaLogSimples(a, p, r, f1, m)
+        # self.logger.criaLogSimples(a, p, r, f1, m)
+        print(f"Acurácia: {a}")
+        return a
 
     # Treinamento da rede
     # A função MLP_treinamento é responsável por realizar o processo de treinamento da rede neural, utilizando o algoritmo de 
@@ -232,11 +237,11 @@ class Gerenciador:
     # | targetsValidacao: Uma lista de listas, onde cada sublista representa um conjunto de saídas esperadas correspondentes às entradas
     # | de validação.
 
-    def MLP_treinamento(self, numEpocas:int, entradasValidacao:list, targetsValidacao:list):
+    def MLP_treinamento(self, numEpocas:int, entradasValidacao:list, targetsValidacao:list, caminho_logs="log/"):
         i = 0
         entradasValidacao = np.insert(entradasValidacao, 0, 1, axis=1) #Coloca o Bias
-        self.logger.logPesos(self.camadas,  "log/pesos_iniciais.txt")
-        self.logger.abrirLogErro() # Abre arquivo de log de erro
+        self.logger.logPesos(self.camadas,  f"{caminho_logs}pesos_iniciais.txt")
+        self.logger.abrirLogErro(f"{caminho_logs}log_erro.txt") # Abre arquivo de log de erro
         for epoca in range(numEpocas): #Roda por um número definido de épocas
             saidasFinal = []
             for linha_entrada, linha_saida  in zip(self.entradas, self.targets):
@@ -267,20 +272,27 @@ class Gerenciador:
                     self.camadas[i].camadaUpdate(deltasCamadas[i], saidasCamadas[i-1], self.taxaAprendizado)
                 saidasFinal.append(saidasCamadas[len(saidasCamadas)-1]) # Pega valores da ultima camada.
 
-            MSE_epoca = self.MLP_Validacao(entradasValidacao, targetsValidacao) # Validação da época
-            self.logger.logErroEpoca(epoca + 1, MSE_epoca) # Log do erro da época
+            # Calcula o MSE de Treino
+            erro_quadratico_treino = np.sum(np.square(self.targets - np.array(saidasFinal)[:, 1:]))
+            MSE_treino = erro_quadratico_treino / len(self.entradas)
 
-            print(f"ÉPOCA {epoca + 1} | MSE: {MSE_epoca:.6f} | ME: {(self.menorErro-MSE_epoca):.6f}") # Exibe que época está 
+            # Calcula o MSE de Validação 
+            MSE_validacao = self.MLP_Validacao(entradasValidacao, targetsValidacao) # Validação da época
+            print(f"ÉPOCA {epoca + 1} | MSE Treino: {MSE_treino:.6f} | MSE Validação: {MSE_validacao:.6f} | ME: {(self.menorErro-MSE_validacao):.6f}") # Exibe que época está 
 
-            if self.earlyStopping(MSE_epoca):
+            self.logger.logErroEpoca(epoca + 1, MSE_treino, MSE_validacao, f"{caminho_logs}log_erro.txt") # Log do erro da época, tanto de treino quanto de validação
+            self.epocas_executadas = epoca + 1 # Atualiza o número de épocas executadas
+
+            if self.earlyStopping(MSE_validacao):
                 print("Early Stopping")
                 break # Verificação se o erro da época ultrapassa a tolerância
 
-        self.logger.abrirLogSaidas("log/saidas_treinamento.txt")
+        self.logger.abrirLogSaidas(f"{caminho_logs}saidas_treinamento.txt")
         for count in range(len(saidasFinal)):
-            self.logger.logSaidas(saidasFinal[count][1:], "log/saidas_treinamento.txt")
-        self.logger.logPesos(self.camadas, "log/pesos_finais.txt")
-    
+            self.logger.logSaidas(saidasFinal[count][1:], f"{caminho_logs}saidas_treinamento.txt")
+        self.logger.logPesos(self.camadas, f"{caminho_logs}pesos_finais.txt")
+
+
     # Validação da rede
     # A função MLP_Validacao é responsável por realizar a validação da rede neural, calculando o erro quadrático médio (MSE) 
     # com base nas saídas da rede e nas saídas esperadas (targets). Ela recebe como parâmetros as entradas e as saídas de validação, 
@@ -325,7 +337,7 @@ class Gerenciador:
     # | entradas: Uma lista de listas, onde cada sublista representa um conjunto de entradas para o conjunto de teste.
     # | saidas: Uma lista de listas, onde cada sublista representa um conjunto de saídas esperadas correspondentes às entradas de teste.
     
-    def MLP_execucao(self, entradas, saidas:list):
+    def MLP_execucao(self, entradas, saidas:list, caminho_logs="log/saidas_teste.txt"):
         saidasFinal = []
         entradas = np.insert(entradas, 0, 1, axis=1) #Coloca o Bias
         for linha_entrada, linha_saida in zip(entradas, saidas):
@@ -337,7 +349,7 @@ class Gerenciador:
                     
             saidasFinal.append(saidasCamadas[len(saidasCamadas)-1])
 
-        self.logger.abrirLogSaidas("log/saidas_teste.txt")
+        self.logger.abrirLogSaidas(caminho_logs)
         for count in range(len(saidasFinal)):
-            self.logger.logSaidas(saidasFinal[count][1:], "log/saidas_teste.txt") # Escreve as saidas
+            self.logger.logSaidas(saidasFinal[count][1:], caminho_logs) # Escreve as saidas
        
